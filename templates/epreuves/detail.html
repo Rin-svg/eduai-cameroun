@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}{{ epreuve.titre }} — EDUAI Cameroun{% endblock %}
+{% block content %}
+<div class="container py-4" style="padding-top: 90px !important;">
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'accueil' %}">Accueil</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'liste_epreuves' %}">Épreuves</a></li>
+      <li class="breadcrumb-item active">{{ epreuve.titre|truncatewords:5 }}</li>
+    </ol>
+  </nav>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow">
+        <div class="card-body p-5">
+          <div class="d-flex gap-2 mb-3">
+            <span class="badge badge-matiere">{{ epreuve.matiere.nom }}</span>
+            <span class="badge bg-light text-dark">{{ epreuve.niveau.nom }}</span>
+            <span class="badge bg-secondary">{{ epreuve.get_type_examen_display }}</span>
+            <span class="badge bg-warning text-dark">{{ epreuve.annee }}</span>
+          </div>
+          <h2 class="fw-bold mb-3">{{ epreuve.titre }}</h2>
+          {% if epreuve.description %}
+          <p class="text-muted">{{ epreuve.description }}</p>
+          {% endif %}
+          <hr>
+          <div class="row text-center">
+            <div class="col-4">
+              <div class="fw-bold text-primary fs-4">{{ epreuve.nb_telechargements }}</div>
+              <small class="text-muted">Téléchargements</small>
+            </div>
+            <div class="col-4">
+              <div class="fw-bold text-success fs-4">{{ epreuve.date_upload|date:"d/m/Y" }}</div>
+              <small class="text-muted">Date d'ajout</small>
+            </div>
+            <div class="col-4">
+              <div class="fw-bold text-info fs-4">
+                {% if epreuve.corrige %}<i class="bi bi-check-circle text-success"></i>{% else %}<i class="bi bi-x-circle text-muted"></i>{% endif %}
+              </div>
+              <small class="text-muted">Corrigé disponible</small>
+            </div>
+          </div>
+          <hr>
+          <div class="d-flex gap-3 flex-wrap">
+            {% if user.is_authenticated %}
+            <a href="{% url 'telecharger_epreuve' epreuve.pk %}" class="btn btn-primary btn-lg">
+              <i class="bi bi-download me-2"></i>Télécharger l'épreuve
+            </a>
+            {% else %}
+            <a href="{% url 'connexion' %}?next={{ request.path }}" class="btn btn-outline-primary btn-lg">
+              <i class="bi bi-lock me-2"></i>Connectez-vous pour télécharger
+            </a>
+            {% endif %}
+            <a href="{% url 'accueil_ia' %}" class="btn btn-outline-warning">
+              <i class="bi bi-robot me-2"></i>Corriger avec l'IA
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      {% if similaires %}
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="bi bi-collection me-2 text-primary"></i>Épreuves similaires</h6>
+          {% for ep in similaires %}
+          <div class="d-flex align-items-start mb-3 pb-3 border-bottom">
+            <div class="flex-grow-1">
+              <a href="{% url 'detail_epreuve' ep.pk %}" class="text-decoration-none fw-semibold small">{{ ep.titre|truncatewords:6 }}</a>
+              <div class="text-muted small">{{ ep.annee }} — {{ ep.get_type_examen_display }}</div>
+            </div>
+            <span class="badge bg-light text-dark small ms-2">{{ ep.nb_telechargements }}<i class="bi bi-download ms-1"></i></span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

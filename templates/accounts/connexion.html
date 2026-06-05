@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Connexion — EDUAI Cameroun{% endblock %}
+{% block content %}
+<div class="min-vh-100 d-flex align-items-center" style="background: linear-gradient(135deg, #0d1b2a 0%, #1b2838 100%); padding-top: 70px;">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-5">
+        <div class="card border-0 shadow-lg">
+          <div class="card-body p-5">
+            <div class="text-center mb-4">
+              <div class="brand-icon-lg mx-auto mb-3"><i class="bi bi-mortarboard-fill"></i></div>
+              <h3 class="fw-bold">EDUAI Cameroun</h3>
+              <p class="text-muted">Connectez-vous à votre espace</p>
+            </div>
+            <form method="post" novalidate>
+              {% csrf_token %}
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Nom d'utilisateur</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-person"></i></span>
+                  <input type="text" name="username" class="form-control form-control-lg" placeholder="Votre identifiant" required autofocus>
+                </div>
+              </div>
+              <div class="mb-4">
+                <label class="form-label fw-semibold">Mot de passe</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                  <input type="password" name="password" class="form-control form-control-lg" placeholder="Votre mot de passe" required>
+                </div>
+              </div>
+              <div class="d-grid mb-3">
+                <button type="submit" class="btn btn-primary btn-lg fw-bold">
+                  <i class="bi bi-box-arrow-in-right me-2"></i>Se connecter
+                </button>
+              </div>
+            </form>
+            <hr>
+            <div class="text-center">
+              <p class="mb-0 text-muted">Pas encore inscrit ?
+                <a href="{% url 'inscription' %}" class="text-primary fw-bold">Créer un compte</a>
+              </p>
+            </div>
+          </div>
+        </div>
+        <p class="text-center text-muted mt-3 small">
+          <i class="bi bi-shield-lock me-1"></i>Connexion sécurisée — EDUAI Cameroun v1.0
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

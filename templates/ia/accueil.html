@@ -1,0 +1,316 @@
+{% extends 'base.html' %}
+{% block title %}Module IA — EDUAI Cameroun{% endblock %}
+{% block extra_css %}
+<style>
+.ia-tab { cursor:pointer; padding:16px 24px; border-radius:12px; border:2px solid transparent; transition:.3s; }
+.ia-tab.active,.ia-tab:hover { border-color:#0d6efd; background:#f0f7ff; }
+.ia-tab.active .ia-tab-icon { color:#0d6efd; }
+.ia-tab-icon { font-size:2rem; color:#adb5bd; }
+.chat-box { height:400px; overflow-y:auto; padding:16px; background:#f8f9fa; border-radius:12px; }
+.msg-user { text-align:right; }
+.msg-user .msg-bubble { background:#0d6efd; color:#fff; display:inline-block; padding:10px 16px; border-radius:18px 18px 4px 18px; max-width:75%; }
+.msg-bot .msg-bubble { background:#fff; border:1px solid #dee2e6; display:inline-block; padding:10px 16px; border-radius:18px 18px 18px 4px; max-width:75%; }
+.msg-bot-icon { width:32px; height:32px; background:#0d6efd; border-radius:50%; display:flex;align-items:center;justify-content:center;color:#fff;font-size:.9rem;flex-shrink:0; }
+.note-circle { width:100px; height:100px; border-radius:50%; border:6px solid; display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container py-4" style="padding-top:90px!important">
+  <div class="text-center mb-5">
+    <div class="d-inline-flex align-items-center gap-2 bg-primary bg-opacity-10 rounded-pill px-4 py-2 mb-3">
+      <i class="bi bi-robot text-primary fs-5"></i>
+      <span class="fw-semibold text-primary">Intelligence Artificielle — EDUAI</span>
+    </div>
+    <h2 class="fw-bold">Module IA Pédagogique</h2>
+    <p class="text-muted">Correction automatique · Chatbot · Détection de plagiat</p>
+    {% if not openai_disponible %}
+    <div class="alert alert-warning d-inline-block">
+      <i class="bi bi-exclamation-triangle me-2"></i>Mode démo actif — Configurez OPENAI_API_KEY dans .env pour activer l'IA réelle.
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- TABS -->
+  <div class="row g-3 mb-5">
+    <div class="col-md-4">
+      <div class="ia-tab active text-center" onclick="showTab('correction')">
+        <div class="ia-tab-icon"><i class="bi bi-check2-all"></i></div>
+        <div class="fw-bold mt-2">Correction Automatique</div>
+        <small class="text-muted">Soumettez une réponse pour correction</small>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="ia-tab text-center" onclick="showTab('chatbot')" id="tab-chatbot">
+        <div class="ia-tab-icon"><i class="bi bi-chat-dots"></i></div>
+        <div class="fw-bold mt-2">EduBot Chatbot</div>
+        <small class="text-muted">Assistant pédagogique 24h/24</small>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="ia-tab text-center" onclick="showTab('plagiat')" id="tab-plagiat">
+        <div class="ia-tab-icon"><i class="bi bi-shield-check"></i></div>
+        <div class="fw-bold mt-2">Anti-Plagiat</div>
+        <small class="text-muted">Comparer deux copies</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL CORRECTION -->
+  <div id="panel-correction">
+    <div class="row">
+      <div class="col-lg-6 mb-4">
+        <div class="card border-0 shadow h-100">
+          <div class="card-body p-4">
+            <h5 class="fw-bold mb-4"><i class="bi bi-pencil-square me-2 text-primary"></i>Saisir votre réponse</h5>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Matière</label>
+              <select class="form-select" id="corrMatiere">
+                <option value="Mathématiques">Mathématiques</option>
+                <option value="Français">Français</option>
+                <option value="Physique-Chimie">Physique-Chimie</option>
+                <option value="SVT">SVT / Sciences de la Vie</option>
+                <option value="Histoire-Géographie">Histoire-Géographie</option>
+                <option value="Philosophie">Philosophie</option>
+                <option value="Informatique">Informatique</option>
+                <option value="Anglais">Anglais</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Question posée <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="corrQuestion" rows="3" placeholder="Copiez ici la question de l'examen..."></textarea>
+            </div>
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Votre réponse <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="corrReponse" rows="6" placeholder="Rédigez ou collez votre réponse ici..."></textarea>
+            </div>
+            <button class="btn btn-primary btn-lg w-100" onclick="corrigerReponse()" id="btnCorrection">
+              <i class="bi bi-robot me-2"></i>Corriger avec l'IA
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6 mb-4">
+        <div class="card border-0 shadow h-100">
+          <div class="card-body p-4" id="resultCorrection">
+            <div class="text-center text-muted py-5">
+              <i class="bi bi-robot fs-1 d-block mb-3 opacity-25"></i>
+              <p>Le résultat de la correction apparaîtra ici.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL CHATBOT -->
+  <div id="panel-chatbot" style="display:none">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card border-0 shadow">
+          <div class="card-header bg-primary text-white d-flex align-items-center gap-2">
+            <div class="msg-bot-icon"><i class="bi bi-robot"></i></div>
+            <div>
+              <div class="fw-bold">EduBot</div>
+              <small class="opacity-75">Assistant pédagogique EDUAI Cameroun</small>
+            </div>
+            <div class="ms-auto"><span class="badge bg-success">En ligne</span></div>
+          </div>
+          <div class="card-body p-0">
+            <div class="chat-box" id="chatBox">
+              <div class="msg-bot d-flex align-items-start gap-2 mb-3">
+                <div class="msg-bot-icon"><i class="bi bi-robot"></i></div>
+                <div class="msg-bubble">Bonjour ! Je suis EduBot, votre assistant pédagogique EDUAI Cameroun 🎓<br>Comment puis-je vous aider aujourd'hui ?</div>
+              </div>
+            </div>
+            <div class="p-3 border-top">
+              <div class="input-group">
+                <input type="text" class="form-control" id="chatInput" placeholder="Posez votre question..." onkeypress="if(event.key==='Enter') envoyerMessage()">
+                <button class="btn btn-primary" onclick="envoyerMessage()"><i class="bi bi-send"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL PLAGIAT -->
+  <div id="panel-plagiat" style="display:none">
+    <div class="row">
+      <div class="col-lg-5 mb-4">
+        <div class="card border-0 shadow h-100">
+          <div class="card-body p-4">
+            <h5 class="fw-bold mb-4"><i class="bi bi-shield-check me-2 text-primary"></i>Comparer deux textes</h5>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Texte 1 (référence)</label>
+              <textarea class="form-control" id="plag1" rows="6" placeholder="Collez le premier texte..."></textarea>
+            </div>
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Texte 2 (à vérifier)</label>
+              <textarea class="form-control" id="plag2" rows="6" placeholder="Collez le second texte..."></textarea>
+            </div>
+            <button class="btn btn-warning btn-lg w-100" onclick="detecterPlagiat()">
+              <i class="bi bi-search me-2"></i>Analyser la similarité
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7 mb-4">
+        <div class="card border-0 shadow h-100">
+          <div class="card-body p-4" id="resultPlagiat">
+            <div class="text-center text-muted py-5">
+              <i class="bi bi-shield fs-1 d-block mb-3 opacity-25"></i>
+              <p>Le rapport anti-plagiat apparaîtra ici.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const tabs = ['correction','chatbot','plagiat'];
+const historiqueChat = [];
+const csrfToken = '{{ csrf_token }}';
+
+function showTab(name) {
+  tabs.forEach(t => {
+    document.getElementById(`panel-${t}`).style.display = t === name ? 'block' : 'none';
+  });
+  document.querySelectorAll('.ia-tab').forEach((el, i) => {
+    el.classList.toggle('active', tabs[i] === name);
+  });
+}
+
+async function corrigerReponse() {
+  const q = document.getElementById('corrQuestion').value.trim();
+  const r = document.getElementById('corrReponse').value.trim();
+  const m = document.getElementById('corrMatiere').value;
+  if (!q || !r) { alert('Veuillez remplir la question et la réponse.'); return; }
+
+  const btn = document.getElementById('btnCorrection');
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Correction en cours...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/ia/corriger/', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','X-CSRFToken': csrfToken},
+      body: JSON.stringify({question: q, reponse: r, matiere: m})
+    });
+    const data = await res.json();
+    if (data.erreur) { alert(data.erreur); return; }
+
+    const score = data.note_sur_20 || data.score || 0;
+    const pct = Math.round((score / 20) * 100);
+    const couleur = pct >= 80 ? '#198754' : pct >= 60 ? '#0d6efd' : pct >= 40 ? '#ffc107' : '#dc3545';
+
+    const pFortsHTML = (data.points_forts || []).map(p => `<li class="text-success"><i class="bi bi-check-circle me-1"></i>${p}</li>`).join('');
+    const pAmelHTML = (data.points_amelioration || []).map(p => `<li class="text-danger"><i class="bi bi-arrow-up-circle me-1"></i>${p}</li>`).join('');
+
+    document.getElementById('resultCorrection').innerHTML = `
+      <h5 class="fw-bold mb-4"><i class="bi bi-clipboard-check me-2 text-success"></i>Résultat de la correction</h5>
+      ${data.mode_demo ? '<div class="alert alert-secondary py-2 small mb-3"><i class="bi bi-info-circle me-1"></i>Mode démo — Résultat simulé</div>' : ''}
+      <div class="note-circle mb-4" style="border-color:${couleur}">
+        <span class="fw-bold fs-3" style="color:${couleur}">${score}</span>
+        <small class="text-muted">/20</small>
+      </div>
+      <div class="text-center mb-3">
+        <span class="badge px-3 py-2 fs-6" style="background:${couleur}">${data.appreciation || ''}</span>
+      </div>
+      <div class="alert alert-light border-start border-4 mb-3" style="border-color:${couleur}!important">
+        <p class="mb-0">${data.commentaire || ''}</p>
+      </div>
+      <div class="row g-3">
+        <div class="col-6">
+          <h6 class="fw-bold text-success small"><i class="bi bi-check2-all me-1"></i>Points forts</h6>
+          <ul class="small list-unstyled">${pFortsHTML}</ul>
+        </div>
+        <div class="col-6">
+          <h6 class="fw-bold text-danger small"><i class="bi bi-arrow-up me-1"></i>À améliorer</h6>
+          <ul class="small list-unstyled">${pAmelHTML}</ul>
+        </div>
+      </div>`;
+  } catch(e) {
+    alert('Erreur lors de la correction : ' + e.message);
+  } finally {
+    btn.innerHTML = '<i class="bi bi-robot me-2"></i>Corriger avec l\'IA';
+    btn.disabled = false;
+  }
+}
+
+async function envoyerMessage() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  const chatBox = document.getElementById('chatBox');
+  chatBox.innerHTML += `<div class="msg-user mb-3"><div class="msg-bubble">${msg}</div></div>`;
+  chatBox.scrollTop = chatBox.scrollHeight;
+
+  const thinking = `<div class="msg-bot d-flex align-items-start gap-2 mb-3" id="thinking">
+    <div class="msg-bot-icon"><i class="bi bi-robot"></i></div>
+    <div class="msg-bubble"><span class="spinner-border spinner-border-sm"></span></div></div>`;
+  chatBox.innerHTML += thinking;
+  chatBox.scrollTop = chatBox.scrollHeight;
+
+  try {
+    const res = await fetch('/ia/chatbot/', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','X-CSRFToken': csrfToken},
+      body: JSON.stringify({message: msg, historique: historiqueChat})
+    });
+    const data = await res.json();
+    document.getElementById('thinking')?.remove();
+
+    const reponse = data.reponse || data.erreur || 'Erreur inconnue.';
+    historiqueChat.push({role:'user', content: msg});
+    historiqueChat.push({role:'assistant', content: reponse});
+
+    chatBox.innerHTML += `<div class="msg-bot d-flex align-items-start gap-2 mb-3">
+      <div class="msg-bot-icon"><i class="bi bi-robot"></i></div>
+      <div class="msg-bubble">${reponse.replace(/\n/g,'<br>')}</div></div>`;
+    chatBox.scrollTop = chatBox.scrollHeight;
+  } catch(e) {
+    document.getElementById('thinking')?.remove();
+    chatBox.innerHTML += `<div class="msg-bot d-flex gap-2 mb-3">
+      <div class="msg-bot-icon"><i class="bi bi-robot"></i></div>
+      <div class="msg-bubble text-danger">Erreur de connexion.</div></div>`;
+  }
+}
+
+async function detecterPlagiat() {
+  const t1 = document.getElementById('plag1').value.trim();
+  const t2 = document.getElementById('plag2').value.trim();
+  if (!t1 || !t2) { alert('Veuillez saisir les deux textes.'); return; }
+
+  const res = await fetch('/ia/plagiat/', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','X-CSRFToken': csrfToken},
+    body: JSON.stringify({texte1: t1, texte2: t2})
+  });
+  const data = await res.json();
+  if (data.erreur) { alert(data.erreur); return; }
+
+  const pct = data.similarite_pourcent || 0;
+  const couleur = pct >= 70 ? '#dc3545' : pct >= 40 ? '#ffc107' : '#198754';
+  const passes = (data.passages_similaires || []).map(p => `<li><code>${p}</code></li>`).join('');
+
+  document.getElementById('resultPlagiat').innerHTML = `
+    <h5 class="fw-bold mb-4"><i class="bi bi-shield-check me-2"></i>Rapport Anti-Plagiat</h5>
+    ${data.mode_demo ? '<div class="alert alert-secondary small py-2 mb-3">Mode démo — Résultat simulé</div>' : ''}
+    <div class="note-circle mb-3" style="border-color:${couleur}">
+      <span class="fw-bold fs-2" style="color:${couleur}">${pct}%</span>
+      <small class="text-muted">similaire</small>
+    </div>
+    <div class="text-center mb-3">
+      <span class="badge px-3 py-2 fs-6" style="background:${couleur}">${data.verdict || ''}</span>
+    </div>
+    <div class="alert alert-light border mb-3"><p class="mb-0">${data.explication || ''}</p></div>
+    ${passes ? `<h6 class="fw-bold small">Passages similaires détectés :</h6><ul class="small">${passes}</ul>` : ''}`;
+}
+</script>
+{% endblock %}

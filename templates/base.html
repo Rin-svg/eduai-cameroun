@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}EDUAI Cameroun{% endblock %}</title>
+    {% load static %}
+    <!-- Bootstrap 5 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <!-- EDUAI Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary-eduai fixed-top shadow-sm">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'accueil' %}">
+      <div class="brand-icon"><i class="bi bi-mortarboard-fill"></i></div>
+      <div>
+        <span class="fw-bold">EDUAI</span>
+        <small class="d-block" style="font-size:.65rem;opacity:.85;line-height:1">Cameroun</small>
+      </div>
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navMain">
+      <ul class="navbar-nav me-auto gap-1">
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'accueil' %}active{% endif %}" href="{% url 'accueil' %}">
+            <i class="bi bi-house"></i> Accueil
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if 'epreuves' in request.path %}active{% endif %}" href="{% url 'liste_epreuves' %}">
+            <i class="bi bi-file-earmark-text"></i> Épreuves
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if 'quiz' in request.path %}active{% endif %}" href="{% url 'liste_quiz' %}">
+            <i class="bi bi-patch-question"></i> Quiz
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if 'ia' in request.path %}active{% endif %}" href="{% url 'accueil_ia' %}">
+            <i class="bi bi-robot"></i> IA
+          </a>
+        </li>
+        {% if user.is_authenticated and user.est_admin %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+            <i class="bi bi-shield-lock"></i> Admin
+          </a>
+          <ul class="dropdown-menu dropdown-menu-dark">
+            <li><a class="dropdown-item" href="{% url 'monitoring_dashboard' %}"><i class="bi bi-speedometer2"></i> Monitoring</a></li>
+            <li><a class="dropdown-item" href="{% url 'tableau_securite' %}"><i class="bi bi-shield-exclamation"></i> Sécurité</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="/admin/"><i class="bi bi-gear"></i> Administration Django</a></li>
+          </ul>
+        </li>
+        {% endif %}
+      </ul>
+
+      <ul class="navbar-nav align-items-center gap-2">
+        {% if user.is_authenticated %}
+          <li class="nav-item">
+            <span class="badge bg-role-{{ user.role }} me-1">{{ user.get_role_display }}</span>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" data-bs-toggle="dropdown">
+              {% if user.avatar %}
+                <img src="{{ user.avatar.url }}" class="rounded-circle" width="28" height="28" style="object-fit:cover">
+              {% else %}
+                <div class="user-avatar-sm">{{ user.username|first|upper }}</div>
+              {% endif %}
+              {{ user.get_full_name|default:user.username }}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="{% url 'profil' %}"><i class="bi bi-person"></i> Mon profil</a></li>
+              <li><a class="dropdown-item" href="{% url 'mes_resultats' %}"><i class="bi bi-trophy"></i> Mes résultats</a></li>
+              {% if user.est_enseignant or user.est_admin %}
+              <li><a class="dropdown-item" href="{% url 'upload_epreuve' %}"><i class="bi bi-cloud-upload"></i> Uploader une épreuve</a></li>
+              {% endif %}
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="{% url 'deconnexion' %}"><i class="bi bi-box-arrow-right"></i> Déconnexion</a></li>
+            </ul>
+          </li>
+        {% else %}
+          <li class="nav-item"><a class="nav-link" href="{% url 'connexion' %}"><i class="bi bi-box-arrow-in-right"></i> Connexion</a></li>
+          <li class="nav-item"><a class="btn btn-light btn-sm" href="{% url 'inscription' %}">S'inscrire</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- MESSAGES DJANGO -->
+<div class="toast-container position-fixed top-0 end-0 p-3 mt-5" style="z-index:9999">
+  {% for msg in messages %}
+  <div class="toast show align-items-center text-white
+    {% if msg.tags == 'success' %}bg-success
+    {% elif msg.tags == 'error' %}bg-danger
+    {% elif msg.tags == 'warning' %}bg-warning text-dark
+    {% else %}bg-info{% endif %}"
+    role="alert" data-bs-autohide="true" data-bs-delay="4000">
+    <div class="d-flex">
+      <div class="toast-body"><i class="bi bi-info-circle me-2"></i>{{ msg }}</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- CONTENU PRINCIPAL -->
+<main class="main-content">
+  {% block content %}{% endblock %}
+</main>
+
+<!-- FOOTER -->
+<footer class="footer-eduai mt-5 py-4">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-6">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <i class="bi bi-mortarboard-fill text-primary fs-5"></i>
+          <strong>EDUAI Cameroun</strong>
+        </div>
+        <small class="text-muted">Plateforme Éducative Intelligente — Projet Tuteuré 2025</small>
+      </div>
+      <div class="col-md-6 text-md-end">
+        <small class="text-muted">
+          <i class="bi bi-server"></i> Serveur : 192.168.1.10 &nbsp;|&nbsp;
+          <i class="bi bi-wifi"></i> Réseau Local EDUAI
+        </small>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Auto-dismiss toasts
+document.querySelectorAll('.toast').forEach(t => {
+  new bootstrap.Toast(t, {delay: 4000}).show();
+});
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

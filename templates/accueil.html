@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% block title %}Accueil — EDUAI Cameroun{% endblock %}
+
+{% block content %}
+<!-- HERO -->
+<section class="hero-section">
+  <div class="container">
+    <div class="row align-items-center min-vh-hero">
+      <div class="col-lg-7">
+        <div class="badge bg-warning text-dark mb-3 px-3 py-2 rounded-pill">
+          <i class="bi bi-stars"></i> Plateforme Éducative Intelligente — Cameroun
+        </div>
+        <h1 class="display-4 fw-bold text-white mb-4">
+          Apprenez. Progressez.<br>
+          <span class="text-gradient">Réussissez.</span>
+        </h1>
+        <p class="lead text-light opacity-75 mb-4">
+          EDUAI Cameroun met à votre disposition des milliers d'épreuves, 
+          un système de quiz interactif et un moteur d'intelligence artificielle 
+          pour corriger vos réponses automatiquement.
+        </p>
+        <div class="d-flex gap-3 flex-wrap">
+          <a href="{% url 'liste_epreuves' %}" class="btn btn-warning btn-lg px-4 shadow">
+            <i class="bi bi-file-earmark-text me-2"></i>Voir les épreuves
+          </a>
+          <a href="{% url 'liste_quiz' %}" class="btn btn-outline-light btn-lg px-4">
+            <i class="bi bi-patch-question me-2"></i>Passer un quiz
+          </a>
+        </div>
+      </div>
+      <div class="col-lg-5 d-none d-lg-flex justify-content-center">
+        <div class="hero-illustration">
+          <i class="bi bi-mortarboard-fill hero-icon"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="py-5 bg-light">
+  <div class="container">
+    <div class="row g-4 text-center">
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-icon bg-primary"><i class="bi bi-file-earmark-text"></i></div>
+          <div class="stat-number">{{ stats.nb_epreuves }}</div>
+          <div class="stat-label">Épreuves disponibles</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-icon bg-success"><i class="bi bi-people"></i></div>
+          <div class="stat-number">{{ stats.nb_utilisateurs }}</div>
+          <div class="stat-label">Utilisateurs inscrits</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-icon bg-warning"><i class="bi bi-patch-check"></i></div>
+          <div class="stat-number">{{ stats.nb_quiz }}</div>
+          <div class="stat-label">Quiz complétés</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-icon bg-info"><i class="bi bi-book"></i></div>
+          <div class="stat-number">{{ stats.nb_matieres }}</div>
+          <div class="stat-label">Matières couvertes</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ÉPREUVES RÉCENTES -->
+<section class="py-5">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="fw-bold"><i class="bi bi-clock-history me-2 text-primary"></i>Épreuves récentes</h2>
+      <a href="{% url 'liste_epreuves' %}" class="btn btn-outline-primary">Voir tout <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="row g-4">
+      {% for epreuve in epreuves_recentes %}
+      <div class="col-md-6 col-lg-4">
+        <div class="card epreuve-card h-100 border-0 shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <span class="badge badge-matiere">{{ epreuve.matiere.nom }}</span>
+              <span class="badge bg-light text-secondary">{{ epreuve.annee }}</span>
+            </div>
+            <h6 class="card-title fw-bold">{{ epreuve.titre }}</h6>
+            <p class="card-text text-muted small">{{ epreuve.niveau.nom }} — {{ epreuve.get_type_examen_display }}</p>
+            <div class="d-flex justify-content-between align-items-center">
+              <small class="text-muted"><i class="bi bi-download me-1"></i>{{ epreuve.nb_telechargements }}</small>
+              <a href="{% url 'detail_epreuve' epreuve.pk %}" class="btn btn-sm btn-primary">
+                Consulter <i class="bi bi-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="col-12 text-center text-muted py-4">
+        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+        Aucune épreuve disponible pour le moment.
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- FONCTIONNALITÉS IA -->
+<section class="py-5 bg-dark text-white">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h2 class="fw-bold"><i class="bi bi-robot me-2 text-warning"></i>Intelligence Artificielle</h2>
+      <p class="text-muted">Nos outils IA pour améliorer votre apprentissage</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="feature-card text-center p-4">
+          <div class="feature-icon mb-3"><i class="bi bi-check2-all"></i></div>
+          <h5 class="fw-bold">Correction Automatique</h5>
+          <p class="text-muted small">Soumettez vos réponses et obtenez une correction détaillée avec commentaires pédagogiques.</p>
+          <a href="{% url 'accueil_ia' %}" class="btn btn-outline-warning btn-sm">Essayer</a>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card text-center p-4">
+          <div class="feature-icon mb-3"><i class="bi bi-chat-dots"></i></div>
+          <h5 class="fw-bold">EduBot Chatbot</h5>
+          <p class="text-muted small">Posez vos questions à notre assistant pédagogique disponible 24h/24.</p>
+          <a href="{% url 'accueil_ia' %}#chatbot" class="btn btn-outline-warning btn-sm">Discuter</a>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card text-center p-4">
+          <div class="feature-icon mb-3"><i class="bi bi-shield-check"></i></div>
+          <h5 class="fw-bold">Anti-Plagiat</h5>
+          <p class="text-muted small">Détectez automatiquement les similarités entre copies pour garantir l'intégrité académique.</p>
+          <a href="{% url 'accueil_ia' %}#plagiat" class="btn btn-outline-warning btn-sm">Analyser</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- APPEL À L'ACTION -->
+{% if not user.is_authenticated %}
+<section class="py-5 text-center">
+  <div class="container">
+    <h2 class="fw-bold mb-3">Rejoignez EDUAI Cameroun</h2>
+    <p class="text-muted mb-4">Créez votre compte gratuitement et accédez à toutes les ressources pédagogiques.</p>
+    <a href="{% url 'inscription' %}" class="btn btn-primary btn-lg px-5">
+      <i class="bi bi-person-plus me-2"></i>Créer un compte
+    </a>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

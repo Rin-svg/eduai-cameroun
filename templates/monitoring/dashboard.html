@@ -1,0 +1,327 @@
+{% extends 'base.html' %}
+{% block title %}Monitoring — EDUAI Cameroun{% endblock %}
+{% block extra_css %}
+<style>
+.metric-card { transition:.3s; border-left:4px solid; }
+.metric-card:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.12)!important; }
+.metric-value { font-size:2rem; font-weight:700; line-height:1; }
+.metric-label { font-size:.75rem; color:#6c757d; text-transform:uppercase; letter-spacing:.05em; }
+.gauge-bar { height:8px; border-radius:4px; overflow:hidden; background:#e9ecef; }
+.live-dot { width:8px;height:8px;border-radius:50%;background:#198754;animation:blink 1.5s infinite; display:inline-block; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+.user-row:hover { background:#f8f9fa; }
+.log-row td { font-size:.8rem; }
+.alerte-critique { border-left:3px solid #dc3545!important; }
+.alerte-avertissement { border-left:3px solid #ffc107!important; }
+.alerte-info { border-left:3px solid #0dcaf0!important; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container-fluid py-3 px-4" style="padding-top:80px!important">
+
+  <!-- EN-TÊTE -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-0"><i class="bi bi-speedometer2 me-2 text-primary"></i>Tableau de Bord Monitoring</h3>
+      <small class="text-muted"><span class="live-dot me-1"></span>Actualisation automatique toutes les 10 secondes</small>
+    </div>
+    <div class="text-end">
+      <div class="fw-bold text-primary" id="timestamp">--:--:--</div>
+      <small class="text-muted" id="osInfo">Chargement...</small>
+    </div>
+  </div>
+
+  <!-- ROW 1 — MÉTRIQUES SYSTÈME -->
+  <div class="row g-3 mb-4">
+    <!-- CPU -->
+    <div class="col-6 col-lg-3">
+      <div class="card metric-card border-0 shadow-sm h-100" style="border-color:#0d6efd!important">
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2">
+            <div class="text-primary fs-4"><i class="bi bi-cpu"></i></div>
+            <small class="text-muted" id="cpuCount">-- cœurs</small>
+          </div>
+          <div class="metric-value text-primary mb-1" id="cpuVal">--%</div>
+          <div class="metric-label mb-2">Utilisation CPU</div>
+          <div class="gauge-bar"><div class="bg-primary" id="cpuBar" style="height:100%;width:0%;transition:.5s"></div></div>
+        </div>
+      </div>
+    </div>
+    <!-- RAM -->
+    <div class="col-6 col-lg-3">
+      <div class="card metric-card border-0 shadow-sm h-100" style="border-color:#198754!important">
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2">
+            <div class="text-success fs-4"><i class="bi bi-memory"></i></div>
+            <small class="text-muted" id="ramTotal">-- Go</small>
+          </div>
+          <div class="metric-value text-success mb-1" id="ramVal">--%</div>
+          <div class="metric-label mb-2">Mémoire RAM</div>
+          <div class="gauge-bar"><div class="bg-success" id="ramBar" style="height:100%;width:0%;transition:.5s"></div></div>
+        </div>
+      </div>
+    </div>
+    <!-- DISQUE -->
+    <div class="col-6 col-lg-3">
+      <div class="card metric-card border-0 shadow-sm h-100" style="border-color:#ffc107!important">
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2">
+            <div class="text-warning fs-4"><i class="bi bi-hdd"></i></div>
+            <small class="text-muted" id="diskTotal">-- Go</small>
+          </div>
+          <div class="metric-value text-warning mb-1" id="diskVal">--%</div>
+          <div class="metric-label mb-2">Espace Disque</div>
+          <div class="gauge-bar"><div class="bg-warning" id="diskBar" style="height:100%;width:0%;transition:.5s"></div></div>
+        </div>
+      </div>
+    </div>
+    <!-- RÉSEAU -->
+    <div class="col-6 col-lg-3">
+      <div class="card metric-card border-0 shadow-sm h-100" style="border-color:#0dcaf0!important">
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2">
+            <div class="text-info fs-4"><i class="bi bi-wifi"></i></div>
+            <small class="text-muted">Wi-Fi réseau</small>
+          </div>
+          <div class="metric-value text-info mb-1" id="netEnvoye">-- Mo</div>
+          <div class="metric-label">Envoyé / <span id="netRecu">-- Mo</span> Reçu</div>
+          <div class="mt-2 small text-muted" id="uptime">Uptime : --</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 2 — STATS APPLICATION -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center p-3">
+        <div class="text-primary fs-2 fw-bold" id="nbUtilisateurs">-</div>
+        <small class="text-muted">Utilisateurs inscrits</small>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center p-3">
+        <div class="text-success fs-2 fw-bold" id="nbSessions">-</div>
+        <small class="text-muted">Sessions actives (15min)</small>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center p-3">
+        <div class="text-warning fs-2 fw-bold" id="nbTelechargements">-</div>
+        <small class="text-muted">Téléchargements (24h)</small>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center p-3">
+        <div class="text-danger fs-2 fw-bold" id="nbAlertes">-</div>
+        <small class="text-muted">Alertes non résolues</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 3 — GRAPHIQUES -->
+  <div class="row g-3 mb-4">
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="bi bi-graph-up me-2 text-primary"></i>Téléchargements (12 dernières heures)</h6>
+          <canvas id="chartTelechargements" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="bi bi-robot me-2 text-warning"></i>Requêtes IA (8 dernières heures)</h6>
+          <canvas id="chartIA" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 4 — UTILISATEURS CONNECTÉS + LOGS -->
+  <div class="row g-3 mb-4">
+    <!-- Utilisateurs connectés -->
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white fw-bold border-0">
+          <i class="bi bi-people me-2 text-success"></i>Utilisateurs connectés
+          <span class="badge bg-success ms-2" id="badgeUsers">0</span>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive" style="max-height:300px;overflow-y:auto">
+            <table class="table table-hover mb-0 align-middle">
+              <thead class="table-light sticky-top">
+                <tr><th class="small">Utilisateur</th><th class="small">Rôle</th><th class="small">IP</th><th class="small">Activité</th></tr>
+              </thead>
+              <tbody id="tableUsers">
+                <tr><td colspan="4" class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm"></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logs récents -->
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white fw-bold border-0">
+          <i class="bi bi-journal-text me-2 text-primary"></i>Logs d'activité récents
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive" style="max-height:300px;overflow-y:auto">
+            <table class="table table-hover mb-0 align-middle">
+              <thead class="table-light sticky-top">
+                <tr class="small"><th>Heure</th><th>Action</th><th>Description</th><th>IP</th></tr>
+              </thead>
+              <tbody id="tableLogs">
+                <tr><td colspan="4" class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm"></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALERTES SÉCURITÉ -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-danger text-white fw-bold border-0">
+      <i class="bi bi-shield-exclamation me-2"></i>Alertes de sécurité actives
+      <a href="{% url 'tableau_securite' %}" class="btn btn-sm btn-outline-light float-end">Voir tout</a>
+    </div>
+    <div class="card-body p-0" id="alertesPanel">
+      <div class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm"></span></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+let chartTele, chartIA;
+
+// Initialisation des graphiques
+function initCharts(histo) {
+  const ctx1 = document.getElementById('chartTelechargements').getContext('2d');
+  chartTele = new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels: histo.telechargements_par_heure.map(d => d.heure),
+      datasets: [{
+        label: 'Téléchargements',
+        data: histo.telechargements_par_heure.map(d => d.nb),
+        backgroundColor: 'rgba(13,110,253,.6)',
+        borderColor: '#0d6efd',
+        borderWidth: 1,
+        borderRadius: 4,
+      }]
+    },
+    options: { responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true,ticks:{stepSize:1}}} }
+  });
+
+  const ctx2 = document.getElementById('chartIA').getContext('2d');
+  chartIA = new Chart(ctx2, {
+    type: 'line',
+    data: {
+      labels: histo.ia_par_heure.map(d => d.heure),
+      datasets: [{
+        label: 'Requêtes IA',
+        data: histo.ia_par_heure.map(d => d.nb),
+        borderColor: '#ffc107',
+        backgroundColor: 'rgba(255,193,7,.15)',
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#ffc107',
+      }]
+    },
+    options: { responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true,ticks:{stepSize:1}}} }
+  });
+}
+
+const rolesLabel = { admin:'Administrateur', enseignant:'Enseignant', eleve:'Élève' };
+const actionIcons = { connexion:'box-arrow-in-right', deconnexion:'box-arrow-right', telechargement:'download', upload:'cloud-upload', quiz:'patch-question', ia:'robot', admin:'gear', alerte:'exclamation-triangle' };
+
+async function actualiser() {
+  try {
+    const res = await fetch('/monitoring/api/metriques/');
+    const d = await res.json();
+    if (d.erreur) return;
+
+    // Système
+    const s = d.systeme;
+    document.getElementById('timestamp').textContent = d.timestamp;
+    document.getElementById('osInfo').textContent = s.os;
+    document.getElementById('cpuCount').textContent = s.cpu_count + ' cœurs';
+    document.getElementById('cpuVal').textContent = s.cpu_percent + '%';
+    document.getElementById('cpuBar').style.width = s.cpu_percent + '%';
+    document.getElementById('ramVal').textContent = s.ram_percent + '%';
+    document.getElementById('ramTotal').textContent = s.ram_utilise_gb + '/' + s.ram_total_gb + ' Go';
+    document.getElementById('ramBar').style.width = s.ram_percent + '%';
+    document.getElementById('diskVal').textContent = s.disque_percent + '%';
+    document.getElementById('diskTotal').textContent = s.disque_utilise_gb + '/' + s.disque_total_gb + ' Go';
+    document.getElementById('diskBar').style.width = s.disque_percent + '%';
+    document.getElementById('netEnvoye').textContent = s.net_envoye_mb + ' Mo';
+    document.getElementById('netRecu').textContent = s.net_recu_mb + ' Mo';
+    document.getElementById('uptime').textContent = 'Uptime : ' + s.uptime;
+
+    // Application
+    const a = d.application;
+    document.getElementById('nbUtilisateurs').textContent = a.nb_utilisateurs_total;
+    document.getElementById('nbSessions').textContent = a.nb_sessions_actives;
+    document.getElementById('nbTelechargements').textContent = a.nb_telechargements_24h;
+    document.getElementById('nbAlertes').textContent = a.nb_alertes_actives;
+    document.getElementById('badgeUsers').textContent = a.nb_sessions_actives;
+
+    // Utilisateurs connectés
+    const tbody = document.getElementById('tableUsers');
+    tbody.innerHTML = d.utilisateurs_connectes.length === 0
+      ? '<tr><td colspan="4" class="text-center text-muted">Aucun utilisateur actif</td></tr>'
+      : d.utilisateurs_connectes.map(u => `
+        <tr class="user-row">
+          <td class="small fw-semibold">${u.first_name || ''} ${u.last_name || u.username}</td>
+          <td><span class="badge bg-secondary small">${rolesLabel[u.role] || u.role}</span></td>
+          <td class="small text-monospace text-muted">${u.adresse_ip || '-'}</td>
+          <td class="small text-muted">${u.derniere_activite}</td>
+        </tr>`).join('');
+
+    // Logs
+    const tLogs = document.getElementById('tableLogs');
+    tLogs.innerHTML = d.logs_recents.length === 0
+      ? '<tr><td colspan="4" class="text-center text-muted">Aucun log</td></tr>'
+      : d.logs_recents.map(l => `
+        <tr class="log-row ${l.est_suspect ? 'table-warning' : ''}">
+          <td class="text-muted">${l.date_action}</td>
+          <td><i class="bi bi-${actionIcons[l.type_action] || 'circle'} me-1"></i>${l.type_action}</td>
+          <td class="text-truncate" style="max-width:200px">${l.description}</td>
+          <td class="text-muted">${l.adresse_ip}</td>
+        </tr>`).join('');
+
+    // Alertes
+    const alertesP = document.getElementById('alertesPanel');
+    alertesP.innerHTML = d.alertes.length === 0
+      ? '<div class="text-center text-success py-3"><i class="bi bi-shield-check me-2"></i>Aucune alerte active</div>'
+      : d.alertes.map(a => `
+        <div class="p-3 border-bottom alerte-${a.niveau}">
+          <div class="d-flex justify-content-between">
+            <strong class="small">${a.titre}</strong>
+            <small class="text-muted">${a.date_alerte}</small>
+          </div>
+          <p class="small text-muted mb-0">${a.message}</p>
+        </div>`).join('');
+  } catch(e) {
+    console.error('Erreur monitoring:', e);
+  }
+}
+
+// Chargement initial des graphiques
+fetch('/monitoring/api/historique/')
+  .then(r => r.json())
+  .then(h => initCharts(h))
+  .catch(e => console.error(e));
+
+// Actualisation immédiate puis toutes les 10s
+actualiser();
+setInterval(actualiser, 10000);
+</script>
+{% endblock %}

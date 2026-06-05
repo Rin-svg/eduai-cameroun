@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Inscription — EDUAI Cameroun{% endblock %}
+{% block content %}
+<div class="container py-5" style="padding-top: 90px !important;">
+  <div class="row justify-content-center">
+    <div class="col-md-7">
+      <div class="card border-0 shadow">
+        <div class="card-body p-5">
+          <h3 class="fw-bold mb-1 text-center">Créer un compte</h3>
+          <p class="text-muted text-center mb-4">Rejoignez la plateforme EDUAI Cameroun</p>
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Prénom <span class="text-danger">*</span></label>
+                <input type="text" name="first_name" class="form-control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Nom <span class="text-danger">*</span></label>
+                <input type="text" name="last_name" class="form-control" required>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Nom d'utilisateur <span class="text-danger">*</span></label>
+                <input type="text" name="username" class="form-control" required>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Email</label>
+                <input type="email" name="email" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Rôle <span class="text-danger">*</span></label>
+                <select name="role" class="form-select" required>
+                  <option value="eleve">Élève</option>
+                  <option value="enseignant">Enseignant</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Classe / Filière</label>
+                <input type="text" name="classe" class="form-control" placeholder="Ex: Terminale D">
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Établissement</label>
+                <input type="text" name="etablissement" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Mot de passe <span class="text-danger">*</span></label>
+                <input type="password" name="password1" class="form-control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Confirmer <span class="text-danger">*</span></label>
+                <input type="password" name="password2" class="form-control" required>
+              </div>
+            </div>
+            <div class="d-grid mt-4">
+              <button type="submit" class="btn btn-primary btn-lg fw-bold">
+                <i class="bi bi-person-check me-2"></i>Créer mon compte
+              </button>
+            </div>
+          </form>
+          <hr class="mt-4">
+          <p class="text-center mb-0">Déjà un compte ? <a href="{% url 'connexion' %}" class="text-primary fw-bold">Se connecter</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

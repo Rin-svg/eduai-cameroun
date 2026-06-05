@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}Résultat Quiz — EDUAI Cameroun{% endblock %}
+{% block content %}
+<div class="container py-4" style="padding-top:90px!important">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <!-- Carte résultat principal -->
+      <div class="card border-0 shadow text-center mb-4">
+        <div class="card-body p-5">
+          {% if session.pourcentage >= 80 %}
+            <div class="result-icon text-success mb-3"><i class="bi bi-trophy-fill"></i></div>
+            <h2 class="fw-bold text-success">Excellent !</h2>
+          {% elif session.pourcentage >= 60 %}
+            <div class="result-icon text-primary mb-3"><i class="bi bi-patch-check-fill"></i></div>
+            <h2 class="fw-bold text-primary">Bien !</h2>
+          {% elif session.pourcentage >= 40 %}
+            <div class="result-icon text-warning mb-3"><i class="bi bi-emoji-neutral-fill"></i></div>
+            <h2 class="fw-bold text-warning">Passable</h2>
+          {% else %}
+            <div class="result-icon text-danger mb-3"><i class="bi bi-emoji-frown-fill"></i></div>
+            <h2 class="fw-bold text-danger">À améliorer</h2>
+          {% endif %}
+          <h4 class="text-muted mb-4">{{ session.quiz.titre }}</h4>
+
+          <div class="row g-4 mb-4">
+            <div class="col-4">
+              <div class="fw-bold fs-2 text-primary">{{ session.score_obtenu }}</div>
+              <small class="text-muted">Points obtenus</small>
+            </div>
+            <div class="col-4">
+              <div class="fw-bold fs-2 text-dark">{{ session.quiz.score_total }}</div>
+              <small class="text-muted">Points totaux</small>
+            </div>
+            <div class="col-4">
+              <div class="fw-bold fs-2 text-success">{{ session.pourcentage }}%</div>
+              <small class="text-muted">Réussite</small>
+            </div>
+          </div>
+
+          <!-- Barre de progression -->
+          <div class="progress mb-4" style="height: 16px; border-radius: 8px;">
+            <div class="progress-bar
+              {% if session.pourcentage >= 80 %}bg-success
+              {% elif session.pourcentage >= 60 %}bg-primary
+              {% elif session.pourcentage >= 40 %}bg-warning
+              {% else %}bg-danger{% endif %}"
+              style="width: {{ session.pourcentage }}%; border-radius:8px;">
+            </div>
+          </div>
+
+          <div class="d-flex gap-3 justify-content-center">
+            <a href="{% url 'liste_quiz' %}" class="btn btn-outline-primary">
+              <i class="bi bi-arrow-left me-2"></i>Autres quiz
+            </a>
+            <a href="{% url 'accueil_ia' %}" class="btn btn-warning">
+              <i class="bi bi-robot me-2"></i>Corriger avec l'IA
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Détail des réponses -->
+      <div class="card border-0 shadow mb-4">
+        <div class="card-body">
+          <h5 class="fw-bold mb-4"><i class="bi bi-list-check me-2 text-primary"></i>Détail des réponses</h5>
+          {% for rep in reponses %}
+          <div class="mb-4 pb-4 border-bottom">
+            <div class="d-flex gap-2 mb-2">
+              <span class="badge bg-secondary">Q{{ forloop.counter }}</span>
+              {% if rep.est_correcte %}
+                <span class="badge bg-success"><i class="bi bi-check-lg"></i> Correct</span>
+              {% else %}
+                <span class="badge bg-danger"><i class="bi bi-x-lg"></i> Incorrect</span>
+              {% endif %}
+              <span class="badge bg-light text-dark">{{ rep.points_obtenus }}/{{ rep.question.points }} pts</span>
+            </div>
+            <p class="fw-semibold mb-2">{{ rep.question.enonce }}</p>
+            {% if rep.choix_selectionne %}
+            <p class="mb-1 small">
+              <strong>Votre réponse :</strong>
+              <span class="{% if rep.est_correcte %}text-success{% else %}text-danger{% endif %}">
+                {{ rep.choix_selectionne.texte }}
+              </span>
+            </p>
+            {% if not rep.est_correcte %}
+            <p class="mb-1 small text-success">
+              <strong>Bonne réponse :</strong>
+              {% for c in rep.question.choix.all %}{% if c.est_correct %}{{ c.texte }}{% endif %}{% endfor %}
+            </p>
+            {% endif %}
+            {% elif rep.texte_reponse %}
+            <p class="mb-1 small"><strong>Votre réponse :</strong> {{ rep.texte_reponse }}</p>
+            {% endif %}
+            {% if rep.question.explication %}
+            <div class="alert alert-info py-2 mt-2 small">
+              <i class="bi bi-lightbulb me-1"></i><strong>Explication :</strong> {{ rep.question.explication }}
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Classement -->
+      {% if classement %}
+      <div class="card border-0 shadow">
+        <div class="card-body">
+          <h5 class="fw-bold mb-3"><i class="bi bi-bar-chart me-2 text-warning"></i>Classement — Top 10</h5>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-light">
+                <tr><th>#</th><th>Élève</th><th>Score</th><th>Réussite</th><th>Date</th></tr>
+              </thead>
+              <tbody>
+                {% for s in classement %}
+                <tr class="{% if s.utilisateur == user %}table-warning fw-bold{% endif %}">
+                  <td>
+                    {% if forloop.counter == 1 %}<i class="bi bi-trophy-fill text-warning"></i>
+                    {% elif forloop.counter == 2 %}<i class="bi bi-trophy-fill text-secondary"></i>
+                    {% elif forloop.counter == 3 %}<i class="bi bi-trophy-fill text-danger"></i>
+                    {% else %}{{ forloop.counter }}{% endif %}
+                  </td>
+                  <td>{{ s.utilisateur.get_full_name|default:s.utilisateur.username }}</td>
+                  <td>{{ s.score_obtenu }}/{{ s.quiz.score_total }}</td>
+                  <td>
+                    <div class="progress" style="height:8px;width:80px">
+                      <div class="progress-bar bg-success" style="width:{{ s.pourcentage }}%"></div>
+                    </div>
+                    <small>{{ s.pourcentage }}%</small>
+                  </td>
+                  <td><small class="text-muted">{{ s.date_fin|date:"d/m/Y" }}</small></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
