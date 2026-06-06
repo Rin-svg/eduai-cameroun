@@ -1,50 +1,108 @@
 # =====================================================
 # EDUAI Cameroun — Configuration Pare-feu Windows Defender
-# À exécuter en tant qu'Administrateur sur le PC Serveur
+# LANCER EN TANT QU'ADMINISTRATEUR
+#
+# Clic droit sur PowerShell → "Exécuter en tant qu'administrateur"
+# Puis : powershell -ExecutionPolicy Bypass -File configure_firewall.ps1
 # =====================================================
 
-Write-Host "=== Configuration Pare-feu EDUAI Cameroun ===" -ForegroundColor Green
+Write-Host ""
+Write-Host "=================================================" -ForegroundColor Cyan
+Write-Host "   EDUAI Cameroun - Configuration Pare-feu       " -ForegroundColor Cyan
+Write-Host "=================================================" -ForegroundColor Cyan
+Write-Host ""
 
-# Autoriser le port 80 (HTTP) en entrée pour XAMPP/Django
-Write-Host "Ouverture du port 80 (HTTP)..."
-New-NetFirewallRule -DisplayName "EDUAI-HTTP-80" `
-    -Direction Inbound -Action Allow `
-    -Protocol TCP -LocalPort 80 `
-    -Description "EDUAI Cameroun — Accès HTTP Application Web" `
-    -ErrorAction SilentlyContinue
+# --- Supprimer les anciennes règles EDUAI pour repartir propre ---
+Write-Host "[1/5] Nettoyage des anciennes règles EDUAI..." -ForegroundColor Yellow
+Get-NetFirewallRule | Where-Object { $_.DisplayName -like "EDUAI*" } | Remove-NetFirewallRule -ErrorAction SilentlyContinue
+Write-Host "      OK" -ForegroundColor Green
 
-# Port 8000 Django (mode développement)
-Write-Host "Ouverture du port 8000 (Django dev)..."
-New-NetFirewallRule -DisplayName "EDUAI-Django-8000" `
-    -Direction Inbound -Action Allow `
-    -Protocol TCP -LocalPort 8000 `
-    -Description "EDUAI Cameroun — Django Development Server" `
-    -ErrorAction SilentlyContinue
-
-# Port 3306 MySQL (accès local uniquement)
-Write-Host "MySQL 3306 — accès local uniquement..."
-New-NetFirewallRule -DisplayName "EDUAI-MySQL-3306-Local" `
-    -Direction Inbound -Action Allow `
-    -Protocol TCP -LocalPort 3306 `
+# --- Port 8000 Django (réseau local uniquement) ---
+Write-Host "[2/5] Ouverture du port 8000 (Django - réseau local)..." -ForegroundColor Yellow
+New-NetFirewallRule `
+    -DisplayName "EDUAI-Django-8000" `
+    -Direction Inbound `
+    -Action Allow `
+    -Protocol TCP `
+    -LocalPort 8000 `
     -RemoteAddress LocalSubnet `
-    -Description "EDUAI Cameroun — MySQL Local Only" `
-    -ErrorAction SilentlyContinue
+    -Profile Any `
+    -Description "EDUAI Cameroun - Serveur Django accessible sur le LAN" `
+    -ErrorAction Stop | Out-Null
+Write-Host "      Port 8000 OUVERT (LAN uniquement)" -ForegroundColor Green
 
-# Bloquer MySQL depuis l'extérieur
-New-NetFirewallRule -DisplayName "EDUAI-MySQL-Block-External" `
-    -Direction Inbound -Action Block `
-    -Protocol TCP -LocalPort 3306 `
-    -Description "EDUAI Cameroun — MySQL blocked from external" `
-    -ErrorAction SilentlyContinue
+# --- Port 80 HTTP (réseau local uniquement) ---
+Write-Host "[3/5] Ouverture du port 80 (HTTP - réseau local)..." -ForegroundColor Yellow
+New-NetFirewallRule `
+    -DisplayName "EDUAI-HTTP-80" `
+    -Direction Inbound `
+    -Action Allow `
+    -Protocol TCP `
+    -LocalPort 80 `
+    -RemoteAddress LocalSubnet `
+    -Profile Any `
+    -Description "EDUAI Cameroun - HTTP sur le LAN" `
+    -ErrorAction Stop | Out-Null
+Write-Host "      Port 80 OUVERT (LAN uniquement)" -ForegroundColor Green
 
+# --- MySQL 3306 : LOCAL UNIQUEMENT (loopback, jamais le réseau) ---
+Write-Host "[4/5] Sécurisation de MySQL (local uniquement)..." -ForegroundColor Yellow
+New-NetFirewallRule `
+    -DisplayName "EDUAI-MySQL-Allow-Local" `
+    -Direction Inbound `
+    -Action Allow `
+    -Protocol TCP `
+    -LocalPort 3306 `
+    -RemoteAddress 127.0.0.1 `
+    -Profile Any `
+    -Description "EDUAI - MySQL accessible uniquement depuis localhost" `
+    -ErrorAction SilentlyContinue | Out-Null
+
+New-NetFirewallRule `
+    -DisplayName "EDUAI-MySQL-Block-LAN" `
+    -Direction Inbound `
+    -Action Block `
+    -Protocol TCP `
+    -LocalPort 3306 `
+    -RemoteAddress LocalSubnet `
+    -Profile Any `
+    -Description "EDUAI - MySQL bloqué depuis le réseau" `
+    -ErrorAction SilentlyContinue | Out-Null
+Write-Host "      MySQL 3306 : BLOQUÉ depuis le réseau, local OK" -ForegroundColor Green
+
+# --- Récapitulatif ---
 Write-Host ""
-Write-Host "✅ Configuration pare-feu terminée !" -ForegroundColor Green
-Write-Host "   Port 80  : AUTORISÉ (application web)"
-Write-Host "   Port 8000: AUTORISÉ (Django dev)"
-Write-Host "   Port 3306: LOCAL UNIQUEMENT (MySQL)"
+Write-Host "[5/5] Vérification des règles créées..." -ForegroundColor Yellow
 Write-Host ""
-
-# Afficher les règles EDUAI créées
-Write-Host "Règles EDUAI actives :" -ForegroundColor Yellow
 Get-NetFirewallRule | Where-Object { $_.DisplayName -like "EDUAI*" } | `
-    Select-Object DisplayName, Direction, Action, Enabled | Format-Table -AutoSize
+    Select-Object DisplayName, Direction, Action, Enabled | `
+    Format-Table -AutoSize
+
+# --- Afficher l'IP locale (carte Wi-Fi réelle, ignore VPN/Hyper-V) ---
+Write-Host ""
+Write-Host "=================================================" -ForegroundColor Cyan
+Write-Host "   Configuration terminee !                      " -ForegroundColor Green
+Write-Host "=================================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Adresse IP du serveur (a communiquer aux eleves) :"
+
+# Priorité : carte Wi-Fi → exclure VPN (10.2.x), Hyper-V (172.x), APIPA (169.x), loopback
+$ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object {
+    $_.IPAddress -notlike "127.*" -and
+    $_.IPAddress -notlike "169.*" -and
+    $_.IPAddress -notlike "172.*" -and
+    $_.IPAddress -notlike "10.2.*"
+} | Select-Object -First 1).IPAddress
+
+if (-not $ip) {
+    # Fallback : prendre n'importe quelle IP non-loopback
+    $ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notlike "127.*" } | Select-Object -First 1).IPAddress
+}
+
+Write-Host ""
+Write-Host "   http://${ip}:8000" -ForegroundColor White -BackgroundColor DarkGreen
+Write-Host ""
+Write-Host "Les appareils connectes au meme Wi-Fi peuvent utiliser cette adresse." -ForegroundColor Gray
+Write-Host ""
+Write-Host ">> Si l'IP est incorrecte, faire 'ipconfig' et chercher 'Carte reseau sans fil Wi-Fi'" -ForegroundColor Yellow
+Write-Host ""

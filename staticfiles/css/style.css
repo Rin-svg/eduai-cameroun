@@ -1,0 +1,145 @@
+/* =====================================================
+   EDUAI CAMEROUN — Feuille de style principale
+   Projet Tuteuré 2025
+   ===================================================== */
+
+:root {
+  --eduai-primary: #0d6efd;
+  --eduai-dark: #0d1b2a;
+  --eduai-darker: #060d14;
+  --eduai-accent: #ffc107;
+  --eduai-success: #198754;
+  --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+body { font-family: var(--font-main); padding-top: 60px; }
+
+/* ── NAVBAR ── */
+.bg-primary-eduai {
+  background: linear-gradient(135deg, var(--eduai-dark) 0%, #1a2c45 100%) !important;
+}
+.navbar-brand .brand-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--eduai-primary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; color: #fff;
+}
+.user-avatar-sm {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--eduai-primary); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .8rem; font-weight: 700;
+}
+.nav-link { border-radius: 8px; padding: 6px 12px !important; transition: .2s; }
+.nav-link:hover, .nav-link.active { background: rgba(255,255,255,.1); }
+
+/* ── MAIN CONTENT ── */
+.main-content { min-height: calc(100vh - 120px); }
+
+/* ── HERO SECTION ── */
+.hero-section {
+  background: linear-gradient(135deg, var(--eduai-dark) 0%, #1a2c45 60%, #1e3a5f 100%);
+  padding: 80px 0 60px;
+  min-height: 85vh;
+  display: flex; align-items: center;
+}
+.min-vh-hero { min-height: 65vh; }
+.text-gradient {
+  background: linear-gradient(135deg, #ffc107, #ff8c00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-illustration {
+  width: 280px; height: 280px;
+  background: rgba(255,255,255,.05);
+  border-radius: 50%; border: 2px solid rgba(255,255,255,.1);
+  display: flex; align-items: center; justify-content: center;
+  animation: float 4s ease-in-out infinite;
+}
+.hero-icon { font-size: 8rem; color: rgba(255,255,255,.2); }
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+/* ── STAT CARDS ── */
+.stat-card {
+  background: #fff; border-radius: 16px;
+  padding: 24px 16px; box-shadow: 0 4px 16px rgba(0,0,0,.06);
+  transition: .3s;
+}
+.stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(0,0,0,.12); }
+.stat-icon {
+  width: 52px; height: 52px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; color: #fff; margin: 0 auto 12px;
+}
+.stat-number { font-size: 2.2rem; font-weight: 800; color: #212529; line-height: 1; }
+.stat-label { font-size: .8rem; color: #6c757d; text-transform: uppercase; letter-spacing: .05em; margin-top: 4px; }
+
+/* ── EPREUVE CARDS ── */
+.epreuve-card { border-radius: 14px; transition: .3s; }
+.epreuve-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,.12) !important; }
+.badge-matiere {
+  background: linear-gradient(135deg, var(--eduai-primary), #0056b3);
+  color: #fff; font-size: .7rem; padding: 4px 10px;
+}
+
+/* ── QUIZ CARDS ── */
+.quiz-card { border-radius: 14px; transition: .3s; }
+.quiz-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,.1) !important; }
+
+/* ── FEATURES SECTION (IA) ── */
+.feature-card {
+  background: rgba(255,255,255,.05);
+  border-radius: 16px; border: 1px solid rgba(255,255,255,.08);
+  transition: .3s;
+}
+.feature-card:hover {
+  background: rgba(255,255,255,.08);
+  transform: translateY(-4px);
+}
+.feature-icon {
+  font-size: 2.5rem; color: #ffc107;
+}
+
+/* ── FOOTER ── */
+.footer-eduai {
+  background: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+}
+
+/* ── BRAND ICON LARGE ── */
+.brand-icon-lg {
+  width: 72px; height: 72px; border-radius: 20px;
+  background: linear-gradient(135deg, var(--eduai-primary), #0056b3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; color: #fff; box-shadow: 0 8px 24px rgba(13,110,253,.3);
+}
+
+/* ── BADGES DE RÔLES ── */
+.bg-role-admin { background: #6f42c1 !important; color: #fff; }
+.bg-role-enseignant { background: #198754 !important; color: #fff; }
+.bg-role-eleve { background: #0d6efd !important; color: #fff; }
+
+/* ── RESULT ICON (quiz) ── */
+.result-icon { font-size: 4rem; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .hero-section { padding: 40px 0; min-height: 60vh; }
+  .display-4 { font-size: 1.8rem; }
+  .stat-number { font-size: 1.6rem; }
+}
+
+/* ── ANIMATIONS ── */
+.fade-in { animation: fadeIn .4s ease-in; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── SCROLLBAR CUSTOM ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }

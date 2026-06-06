@@ -108,8 +108,8 @@ LOGIN_URL = '/accounts/connexion/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/connexion/'
 
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
-OPENAI_MODEL = 'gpt-3.5-turbo'
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
+
 
 MAX_LOGIN_ATTEMPTS = 5
 LOCKOUT_DURATION_MINUTES = 15

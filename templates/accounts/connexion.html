@@ -10,7 +10,7 @@
             <div class="text-center mb-4">
               <div class="brand-icon-lg mx-auto mb-3"><i class="bi bi-mortarboard-fill"></i></div>
               <h3 class="fw-bold">EDUAI Cameroun</h3>
-              <p class="text-muted">Connectez-vous à votre espace</p>
+              <p class="text-muted"><span data-i18n="conn_subtitle">Connectez-vous à votre espace</span></p>
             </div>
             <form method="post" novalidate>
               {% csrf_token %}
@@ -37,7 +37,7 @@
             <hr>
             <div class="text-center">
               <p class="mb-0 text-muted">Pas encore inscrit ?
-                <a href="{% url 'inscription' %}" class="text-primary fw-bold">Créer un compte</a>
+                <a href="{% url 'inscription' %}" class="text-primary fw-bold" data-i18n="conn_register">Créer un compte</a>
               </p>
             </div>
           </div>

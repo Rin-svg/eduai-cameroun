@@ -44,11 +44,11 @@
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Mot de passe <span class="text-danger">*</span></label>
-                <input type="password" name="password1" class="form-control" required>
+                <div class="input-group"><input type="password" name="password1" class="form-control" required></div>
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Confirmer <span class="text-danger">*</span></label>
-                <input type="password" name="password2" class="form-control" required>
+                <div class="input-group"><input type="password" name="password2" class="form-control" required></div>
               </div>
             </div>
             <div class="d-grid mt-4">
@@ -58,7 +58,7 @@
             </div>
           </form>
           <hr class="mt-4">
-          <p class="text-center mb-0">Déjà un compte ? <a href="{% url 'connexion' %}" class="text-primary fw-bold">Se connecter</a></p>
+          <p class="text-center mb-0">Déjà un compte ? <a href="{% url 'connexion' %}" class="text-primary fw-bold" data-i18n="reg_login">Se connecter</a></p>
         </div>
       </div>
     </div>
