@@ -52,6 +52,11 @@
         <div class="fw-bold mt-2">Anti-Plagiat</div>
         <small class="text-muted">Comparer deux copies</small>
       </div>
+      <div class="ia-tab text-center" onclick="showTab('genquiz')" id="tab-genquiz">
+        <div class="ia-tab-icon"><i class="bi bi-stars"></i></div>
+        <div class="fw-bold mt-2">Generer Quiz</div>
+        <small class="text-muted">Quiz par l'IA</small>
+      </div>
     </div>
   </div>
 
@@ -167,11 +172,85 @@
       </div>
     </div>
   </div>
+
+  <!-- PANEL GENERATION QUIZ IA -->
+  <div id="panel-genquiz" style="display:none">
+    <div class="row">
+      <div class="col-lg-5 mb-4">
+        <div class="card border-0 shadow h-100">
+          <div class="card-body p-4">
+            <h5 class="fw-bold mb-4"><i class="bi bi-stars me-2 text-warning"></i>Generer un Quiz avec l'IA</h5>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Matiere</label>
+              <select class="form-select" id="gq-matiere">
+                <option value="">-- Choisir --</option>
+                <option>Mathematiques</option>
+                <option>Francais</option>
+                <option>Physique-Chimie</option>
+                <option>SVT</option>
+                <option>Histoire-Geographie</option>
+                <option>Philosophie</option>
+                <option>Informatique</option>
+                <option>Anglais</option>
+                <option>Economie</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Niveau</label>
+              <select class="form-select" id="gq-niveau">
+                <option value="">-- Choisir --</option>
+                <option>6eme</option><option>5eme</option><option>4eme</option><option>3eme</option>
+                <option>Seconde</option><option>Premiere</option><option>Terminale</option>
+                <option>Licence 1</option><option>Licence 2</option><option>Licence 3</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Sujet precis (optionnel)</label>
+              <input type="text" class="form-control" id="gq-sujet" placeholder="Ex: les fonctions derivees, la photosynthese...">
+            </div>
+            <div class="row mb-3">
+              <div class="col-6">
+                <label class="form-label fw-semibold">Nb de questions</label>
+                <select class="form-select" id="gq-nb">
+                  <option value="3">3</option>
+                  <option value="5" selected>5</option>
+                  <option value="7">7</option>
+                  <option value="10">10</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-semibold">Difficulte</label>
+                <select class="form-select" id="gq-diff">
+                  <option value="facile">Facile</option>
+                  <option value="moyen" selected>Moyen</option>
+                  <option value="difficile">Difficile</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn btn-warning btn-lg w-100" onclick="genererQuiz()">
+              <i class="bi bi-stars me-2"></i>Generer le Quiz
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7 mb-4">
+        <div class="card border-0 shadow h-100">
+          <div class="card-body p-4" id="resultGenQuiz">
+            <div class="text-center text-muted py-5">
+              <i class="bi bi-stars fs-1 d-block mb-3 opacity-25"></i>
+              <p>L'IA va generer un quiz personnalise selon vos parametres.</p>
+              <small>Le quiz sera automatiquement enregistre et disponible dans la liste des quiz.</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
 {% block extra_js %}
 <script>
-const tabs = ['correction','chatbot','plagiat'];
+const tabs = ['correction','chatbot','plagiat','genquiz'];
 const historiqueChat = [];
 const csrfToken = '{{ csrf_token }}';
 
@@ -311,6 +390,65 @@ async function detecterPlagiat() {
     </div>
     <div class="alert alert-light border mb-3"><p class="mb-0">${data.explication || ''}</p></div>
     ${passes ? `<h6 class="fw-bold small">Passages similaires détectés :</h6><ul class="small">${passes}</ul>` : ''}`;
+}
+
+async function genererQuiz() {
+  const matiere = document.getElementById('gq-matiere').value;
+  const niveau  = document.getElementById('gq-niveau').value;
+  const sujet   = document.getElementById('gq-sujet').value;
+  const nb      = document.getElementById('gq-nb').value;
+  const diff    = document.getElementById('gq-diff').value;
+  const result  = document.getElementById('resultGenQuiz');
+
+  if (!matiere || !niveau) { alert('Veuillez choisir une matiere et un niveau.'); return; }
+
+  result.innerHTML = `<div class="text-center py-5">
+    <div class="spinner-border text-warning mb-3" role="status"></div>
+    <p class="text-muted">L'IA genere votre quiz en cours...<br><small>Cela peut prendre 10 a 20 secondes.</small></p>
+  </div>`;
+
+  try {
+    const res = await fetch('/ia/generer-quiz/', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+      body: JSON.stringify({matiere, niveau, sujet, nb_questions: parseInt(nb), difficulte: diff})
+    });
+    const data = await res.json();
+
+    if (data.erreur) {
+      result.innerHTML = `<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>${data.erreur}</div>`;
+      return;
+    }
+
+    if (data.mode_demo) {
+      result.innerHTML = `<div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-2"></i><strong>Mode demo</strong><br>${data.message}
+      </div>`;
+      return;
+    }
+
+    result.innerHTML = `
+      <div class="text-center mb-4">
+        <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width:80px;height:80px">
+          <i class="bi bi-check-circle-fill text-success fs-1"></i>
+        </div>
+        <h5 class="fw-bold text-success">Quiz genere avec succes !</h5>
+      </div>
+      <div class="card border-success border-opacity-25 mb-4">
+        <div class="card-body">
+          <h6 class="fw-bold mb-1">${data.quiz_titre}</h6>
+          <p class="text-muted small mb-2">${data.nb_questions} questions generees par l'IA</p>
+          <a href="${data.url_quiz}" class="btn btn-success w-100">
+            <i class="bi bi-play-circle me-2"></i>Demarrer ce Quiz maintenant
+          </a>
+        </div>
+      </div>
+      <a href="/quiz/" class="btn btn-outline-primary w-100">
+        <i class="bi bi-list me-2"></i>Voir tous les quiz
+      </a>`;
+  } catch(e) {
+    result.innerHTML = `<div class="alert alert-danger">Erreur de connexion.</div>`;
+  }
 }
 </script>
 {% endblock %}

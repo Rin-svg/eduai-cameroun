@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion Utilisateurs — EDUAI Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4" style="background:#0d1b2a; min-height:100vh;">
+
+  <div class="d-flex align-items-center justify-content-between mb-4 px-2">
+    <h2 class="text-white fw-bold mb-0">
+      <i class="bi bi-people-fill text-primary me-2"></i>Gestion des utilisateurs
+    </h2>
+    <a href="{% url 'admin_panel:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>Dashboard
+    </a>
+  </div>
+
+  <!-- Filtres -->
+  <div class="card border-0 mb-4 mx-2" style="background:#1a2c45;">
+    <div class="card-body py-2">
+      <form method="get" class="d-flex gap-2 flex-wrap">
+        <input name="q" value="{{ q }}" type="text" placeholder="Rechercher..." class="form-control form-control-sm bg-dark text-white border-secondary" style="max-width:250px;">
+        <select name="role" class="form-select form-select-sm bg-dark text-white border-secondary" style="max-width:160px;">
+          <option value="">Tous les rôles</option>
+          <option value="eleve" {% if role_filtre == 'eleve' %}selected{% endif %}>Élèves</option>
+          <option value="enseignant" {% if role_filtre == 'enseignant' %}selected{% endif %}>Enseignants</option>
+          <option value="admin" {% if role_filtre == 'admin' %}selected{% endif %}>Admins</option>
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">
+          <i class="bi bi-search me-1"></i>Filtrer
+        </button>
+        <a href="{% url 'admin_panel:utilisateurs' %}" class="btn btn-outline-secondary btn-sm">Réinitialiser</a>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tableau -->
+  <div class="card border-0 mx-2" style="background:#1a2c45;">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-dark table-hover mb-0" style="background:transparent;">
+          <thead>
+            <tr class="text-secondary small border-secondary">
+              <th>Utilisateur</th>
+              <th>Rôle</th>
+              <th>Classe</th>
+              <th>Email</th>
+              <th>Inscrit le</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in users %}
+            <tr id="row-{{ u.id }}">
+              <td>
+                <div class="fw-semibold text-white">{{ u.get_full_name|default:u.username }}</div>
+                <small class="text-secondary">@{{ u.username }}</small>
+              </td>
+              <td>
+                <span class="badge {% if u.role == 'admin' %}bg-danger{% elif u.role == 'enseignant' %}bg-success{% else %}bg-primary{% endif %}">
+                  {{ u.get_role_display }}
+                </span>
+              </td>
+              <td><small class="text-secondary">{{ u.classe|default:"—" }}</small></td>
+              <td><small class="text-secondary">{{ u.email|default:"—" }}</small></td>
+              <td><small class="text-secondary">{{ u.date_inscription|date:"d/m/Y" }}</small></td>
+              <td>
+                <span id="badge-{{ u.id }}" class="badge {% if u.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                  {% if u.is_active %}Actif{% else %}Suspendu{% endif %}
+                </span>
+              </td>
+              <td>
+                <div class="d-flex gap-1">
+                  {% if u != request.user %}
+                  <button class="btn btn-sm btn-outline-warning py-0 px-1"
+                    onclick="toggleActif({{ u.id }})"
+                    title="Activer / Suspendre">
+                    <i class="bi bi-toggle-on"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-info py-0 px-1"
+                    onclick="resetMdp({{ u.id }}, '{{ u.username }}')"
+                    title="Réinitialiser MDP">
+                    <i class="bi bi-key"></i>
+                  </button>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="text-center text-secondary py-4">Aucun utilisateur trouvé.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card-footer border-0 text-secondary small" style="background:transparent;">
+      {{ users|length }} utilisateur(s) affiché(s)
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999">
+    <div id="toast-notif" class="toast align-items-center text-white border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body" id="toast-msg"></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function getCookie(name) {
+  const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+  return v ? v[2] : null;
+}
+
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast-notif');
+  t.className = `toast align-items-center text-white border-0 bg-${type}`;
+  document.getElementById('toast-msg').textContent = msg;
+  new bootstrap.Toast(t, {delay:3000}).show();
+}
+
+function toggleActif(userId) {
+  fetch(`/admin-panel/utilisateurs/${userId}/toggle/`, {
+    method: 'POST',
+    headers: {'X-CSRFToken': getCookie('csrftoken')}
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.erreur) { showToast(d.erreur, 'danger'); return; }
+    const badge = document.getElementById(`badge-${userId}`);
+    badge.className = `badge ${d.is_active ? 'bg-success' : 'bg-secondary'}`;
+    badge.textContent = d.is_active ? 'Actif' : 'Suspendu';
+    showToast(d.message, d.is_active ? 'success' : 'warning');
+  });
+}
+
+function resetMdp(userId, username) {
+  if (!confirm(`Réinitialiser le mot de passe de ${username} à "EduAI2025!" ?`)) return;
+  fetch(`/admin-panel/utilisateurs/${userId}/reset/`, {
+    method: 'POST',
+    headers: {'X-CSRFToken': getCookie('csrftoken')}
+  })
+  .then(r => r.json())
+  .then(d => showToast(d.message || d.erreur, d.erreur ? 'danger' : 'info'));
+}
+</script>
+{% endblock %}

@@ -1,0 +1,338 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tableau de bord Admin — EDUAI Cameroun{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4" style="background:#0d1b2a; min-height:100vh;">
+
+  <!-- En-tête -->
+  <div class="d-flex align-items-center justify-content-between mb-4 px-2">
+    <div>
+      <h2 class="text-white fw-bold mb-0">
+        <i class="bi bi-speedometer2 text-warning me-2"></i>Tableau de bord Admin
+      </h2>
+      <small class="text-secondary">EDUAI Cameroun — Panneau d'administration</small>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'admin_panel:utilisateurs' %}" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-people me-1"></i>Utilisateurs
+      </a>
+      <a href="{% url 'admin:index' %}" class="btn btn-outline-warning btn-sm" target="_blank">
+        <i class="bi bi-gear me-1"></i>Admin Django
+      </a>
+    </div>
+  </div>
+
+  <!-- Compteurs principaux -->
+  <div class="row g-3 mb-4 px-2">
+    {% include 'admin_panel/_card_stat.html' with icone="bi-people-fill" couleur="primary" valeur=total_eleves label="Élèves inscrits" sous_label="total" %}
+    {% include 'admin_panel/_card_stat.html' with icone="bi-person-workspace" couleur="success" valeur=total_enseignants label="Enseignants" sous_label="total" %}
+    {% include 'admin_panel/_card_stat.html' with icone="bi-file-earmark-text-fill" couleur="info" valeur=total_epreuves label="Épreuves" sous_label="validées" %}
+    {% include 'admin_panel/_card_stat.html' with icone="bi-patch-question-fill" couleur="warning" valeur=total_quiz label="Quiz actifs" sous_label="disponibles" %}
+  </div>
+
+  <div class="row g-3 mb-4 px-2">
+    {% include 'admin_panel/_card_stat.html' with icone="bi-activity" couleur="success" valeur=actifs_auj label="Actifs aujourd'hui" sous_label="utilisateurs" %}
+    {% include 'admin_panel/_card_stat.html' with icone="bi-joystick" couleur="primary" valeur=quiz_auj label="Quiz joués" sous_label="aujourd'hui" %}
+    {% include 'admin_panel/_card_stat.html' with icone="bi-download" couleur="info" valeur=dl_auj label="Téléchargements" sous_label="aujourd'hui" %}
+    {% include 'admin_panel/_card_stat.html' with icone="bi-shield-exclamation" couleur="danger" valeur=alertes_bf label="IPs bloquées" sous_label="brute force actif" %}
+  </div>
+
+  <!-- Graphique + Épreuves à valider -->
+  <div class="row g-3 mb-4 px-2">
+
+    <!-- Graphique 7 jours -->
+    <div class="col-lg-8">
+      <div class="card border-0 h-100" style="background:#1a2c45;">
+        <div class="card-header border-0 pb-0" style="background:transparent;">
+          <h6 class="text-white mb-0">
+            <i class="bi bi-bar-chart-fill text-primary me-2"></i>Activité — 7 derniers jours
+          </h6>
+        </div>
+        <div class="card-body">
+          <canvas id="graphActivite" height="120"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Épreuves à valider -->
+    <div class="col-lg-4">
+      <div class="card border-0 h-100" style="background:#1a2c45;">
+        <div class="card-header border-0 pb-0" style="background:transparent;">
+          <h6 class="text-white mb-0">
+            <i class="bi bi-hourglass-split text-warning me-2"></i>
+            Épreuves à valider
+            {% if epreuves_non_validees %}
+              <span class="badge bg-danger ms-1">{{ epreuves_non_validees|length }}</span>
+            {% endif %}
+          </h6>
+        </div>
+        <div class="card-body p-2">
+          {% if epreuves_non_validees %}
+            {% for ep in epreuves_non_validees %}
+            <div class="d-flex align-items-center justify-content-between p-2 mb-1 rounded" style="background:#0d1b2a;">
+              <div>
+                <div class="text-white small fw-semibold">{{ ep.titre|truncatechars:30 }}</div>
+                <small class="text-secondary">{{ ep.matiere }} — {{ ep.niveau }}</small>
+              </div>
+              <a href="{% url 'admin_panel:valider_epreuve' ep.id %}"
+                 class="btn btn-success btn-sm py-0 px-2"
+                 onclick="return confirm('Valider cette épreuve ?')">
+                <i class="bi bi-check-lg"></i>
+              </a>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="text-center text-secondary py-4">
+              <i class="bi bi-check-circle fs-2 text-success"></i>
+              <p class="mt-2 small">Toutes les épreuves sont validées.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Derniers inscrits + Sessions récentes -->
+  <div class="row g-3 mb-4 px-2">
+
+    <!-- Derniers inscrits -->
+    <div class="col-lg-6">
+      <div class="card border-0" style="background:#1a2c45;">
+        <div class="card-header border-0 d-flex justify-content-between align-items-center" style="background:transparent;">
+          <h6 class="text-white mb-0">
+            <i class="bi bi-person-plus-fill text-success me-2"></i>Dernières inscriptions
+          </h6>
+          <a href="{% url 'admin_panel:utilisateurs' %}" class="btn btn-outline-secondary btn-sm py-0">Voir tout</a>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-dark table-hover table-sm mb-0" style="background:transparent;">
+              <thead>
+                <tr class="text-secondary small">
+                  <th>Utilisateur</th><th>Rôle</th><th>Classe</th><th>Inscrit le</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for u in derniers_inscrits %}
+                <tr>
+                  <td>
+                    <div class="fw-semibold text-white small">{{ u.get_full_name|default:u.username }}</div>
+                    <small class="text-secondary">@{{ u.username }}</small>
+                  </td>
+                  <td>
+                    <span class="badge {% if u.role == 'enseignant' %}bg-success{% else %}bg-primary{% endif %}">
+                      {{ u.get_role_display }}
+                    </span>
+                  </td>
+                  <td><small class="text-secondary">{{ u.classe|default:"—" }}</small></td>
+                  <td><small class="text-secondary">{{ u.date_inscription|date:"d/m/Y" }}</small></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-secondary py-3">Aucun utilisateur.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sessions quiz récentes -->
+    <div class="col-lg-6">
+      <div class="card border-0" style="background:#1a2c45;">
+        <div class="card-header border-0" style="background:transparent;">
+          <h6 class="text-white mb-0">
+            <i class="bi bi-joystick text-primary me-2"></i>Sessions quiz récentes
+          </h6>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-dark table-hover table-sm mb-0" style="background:transparent;">
+              <thead>
+                <tr class="text-secondary small">
+                  <th>Élève</th><th>Quiz</th><th>Score</th><th>Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for s in dernieres_sessions %}
+                <tr>
+                  <td><small class="text-white">{{ s.utilisateur.username }}</small></td>
+                  <td><small class="text-secondary">{{ s.quiz.titre|truncatechars:25 }}</small></td>
+                  <td>
+                    <span class="fw-bold {% if s.pourcentage >= 50 %}text-success{% else %}text-danger{% endif %}">
+                      {{ s.score_obtenu|floatformat:0 }}pts ({{ s.pourcentage }}%)
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge {% if s.statut == 'termine' %}bg-success{% elif s.statut == 'en_cours' %}bg-warning{% else %}bg-secondary{% endif %}">
+                      {{ s.get_statut_display }}
+                    </span>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-secondary py-3">Aucune session.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Créer un compte rapide -->
+  <div class="row g-3 px-2 mb-4">
+    <div class="col-lg-6">
+      <div class="card border-0" style="background:#1a2c45;">
+        <div class="card-header border-0" style="background:transparent;">
+          <h6 class="text-white mb-0">
+            <i class="bi bi-person-plus text-warning me-2"></i>Créer un compte rapidement
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="row g-2" id="form-creer">
+            <div class="col-6">
+              <input type="text" id="new-username" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Nom d'utilisateur *">
+            </div>
+            <div class="col-6">
+              <select id="new-role" class="form-select form-select-sm bg-dark text-white border-secondary">
+                <option value="eleve">Élève</option>
+                <option value="enseignant">Enseignant</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <input type="text" id="new-prenom" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Prénom">
+            </div>
+            <div class="col-6">
+              <input type="text" id="new-nom" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Nom">
+            </div>
+            <div class="col-6">
+              <input type="email" id="new-email" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Email">
+            </div>
+            <div class="col-6">
+              <input type="text" id="new-classe" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Classe / Filière">
+            </div>
+            <div class="col-12">
+              <button class="btn btn-warning btn-sm w-100" onclick="creerCompte()">
+                <i class="bi bi-plus-circle me-1"></i>Créer le compte (MDP : EduAI2025!)
+              </button>
+            </div>
+            <div class="col-12" id="msg-creation"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top épreuves -->
+    <div class="col-lg-6">
+      <div class="card border-0" style="background:#1a2c45;">
+        <div class="card-header border-0" style="background:transparent;">
+          <h6 class="text-white mb-0">
+            <i class="bi bi-trophy-fill text-warning me-2"></i>Top épreuves téléchargées
+          </h6>
+        </div>
+        <div class="card-body p-2">
+          {% for ep in top_epreuves %}
+          <div class="d-flex align-items-center justify-content-between p-2 mb-1 rounded" style="background:#0d1b2a;">
+            <div>
+              <div class="text-white small fw-semibold">{{ ep.titre|truncatechars:35 }}</div>
+              <small class="text-secondary">{{ ep.matiere }} — {{ ep.annee }}</small>
+            </div>
+            <span class="badge bg-info">
+              <i class="bi bi-download me-1"></i>{{ ep.nb_telechargements }}
+            </span>
+          </div>
+          {% empty %}
+          <p class="text-secondary text-center py-3">Aucune épreuve.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Graphique activité
+const ctx = document.getElementById('graphActivite').getContext('2d');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: {{ labels_7j|safe }},
+    datasets: [
+      {
+        label: 'Sessions quiz',
+        data: {{ sessions_7j|safe }},
+        backgroundColor: 'rgba(13,110,253,0.7)',
+        borderRadius: 4,
+      },
+      {
+        label: 'Téléchargements',
+        data: {{ dl_7j|safe }},
+        backgroundColor: 'rgba(25,135,84,0.7)',
+        borderRadius: 4,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { labels: { color: '#adb5bd' } } },
+    scales: {
+      x: { ticks: { color: '#adb5bd' }, grid: { color: '#1e3a5f' } },
+      y: { ticks: { color: '#adb5bd' }, grid: { color: '#1e3a5f' }, beginAtZero: true }
+    }
+  }
+});
+
+// Créer un compte
+function creerCompte() {
+  const data = {
+    username: document.getElementById('new-username').value,
+    prenom:   document.getElementById('new-prenom').value,
+    nom:      document.getElementById('new-nom').value,
+    email:    document.getElementById('new-email').value,
+    role:     document.getElementById('new-role').value,
+    classe:   document.getElementById('new-classe').value,
+  };
+  const msg = document.getElementById('msg-creation');
+  fetch("{% url 'admin_panel:creer_utilisateur' %}", {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','X-CSRFToken': getCookie('csrftoken')},
+    body: JSON.stringify(data)
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.erreur) {
+      msg.innerHTML = `<div class="alert alert-danger py-1 small">${d.erreur}</div>`;
+    } else {
+      msg.innerHTML = `<div class="alert alert-success py-1 small">${d.message}</div>`;
+      document.getElementById('new-username').value = '';
+      document.getElementById('new-email').value = '';
+      document.getElementById('new-prenom').value = '';
+      document.getElementById('new-nom').value = '';
+      document.getElementById('new-classe').value = '';
+    }
+  });
+}
+
+// CSRF
+function getCookie(name) {
+  const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+  return v ? v[2] : null;
+}
+
+// Rafraîchissement auto des stats (toutes les 30s)
+setInterval(() => {
+  fetch("{% url 'admin_panel:stats_json' %}")
+    .then(r => r.json())
+    .then(d => {
+      // Mise à jour silencieuse — on pourrait mettre à jour les badges ici
+      if (d.alertes_bf > 0) {
+        document.title = `⚠️ ${d.alertes_bf} alerte(s) — EDUAI Admin`;
+      }
+    });
+}, 30000);
+</script>
+{% endblock %}

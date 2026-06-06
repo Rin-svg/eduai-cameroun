@@ -252,3 +252,125 @@ def _journaliser_ia(request, type_req, nb_chars):
         )
     except Exception:
         pass
+
+
+@login_required
+@require_POST
+def generer_quiz(request):
+    """
+    Génère un quiz complet via Gemini et l'enregistre en base de données.
+    Payload JSON : { matiere, niveau, nb_questions, difficulte, sujet }
+    """
+    try:
+        data         = json.loads(request.body)
+        matiere_nom  = data.get('matiere', '').strip()
+        niveau_nom   = data.get('niveau', '').strip()
+        nb_questions = max(2, min(int(data.get('nb_questions', 5)), 10))
+        difficulte   = data.get('difficulte', 'moyen')
+        sujet        = data.get('sujet', '').strip()
+
+        if not matiere_nom or not niveau_nom:
+            return JsonResponse({'erreur': 'Matiere et niveau requis.'}, status=400)
+
+        # ── Mode démo (sans clé API) ──────────────────────────────────────
+        if not _get_api_key():
+            return JsonResponse({
+                'mode_demo': True,
+                'message': 'Configurez GEMINI_API_KEY dans .env pour générer de vrais quiz.',
+                'apercu': {
+                    'titre': f'Quiz {matiere_nom} — {niveau_nom} [DEMO]',
+                    'questions': [
+                        {'enonce': 'Question exemple (mode démo)', 'choix': ['A) Réponse 1', 'B) Réponse 2'], 'correct': 'A'},
+                    ]
+                }
+            })
+
+        # ── Prompt Gemini ─────────────────────────────────────────────────
+        sujet_info = f" sur le sujet : {sujet}" if sujet else ""
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "Tu es un professeur expert camerounais qui crée des quiz pédagogiques "
+                    "selon les programmes du MINESEC. "
+                    "Tu réponds UNIQUEMENT en JSON valide, sans balises markdown ni texte autour."
+                )
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"Crée un quiz de {nb_questions} questions en {matiere_nom} "
+                    f"pour le niveau {niveau_nom}{sujet_info}. "
+                    f"Difficulté : {difficulte}. "
+                    f"Réponds UNIQUEMENT avec ce JSON (rien d'autre) :\n"
+                    '{"titre": "...", "description": "...", '
+                    '"questions": ['
+                    '{"enonce": "...", "type": "qcm", "points": 1, '
+                    '"choix": [{"texte": "...", "correct": true/false}, ...], '
+                    '"explication": "..."}'
+                    ']}'
+                )
+            }
+        ]
+
+        texte   = _appel_gemini(messages, max_tokens=4096, temperature=0.6)
+        payload = json.loads(_nettoyer_json(texte))
+
+        # ── Enregistrement en base ────────────────────────────────────────
+        from apps.epreuves.models import Matiere, Niveau
+        from apps.quiz.models import Quiz, Question, Choix as QuizChoix
+
+        matiere_obj = Matiere.objects.filter(nom__icontains=matiere_nom).first()
+        niveau_obj  = Niveau.objects.filter(nom__icontains=niveau_nom).first()
+
+        if not matiere_obj or not niveau_obj:
+            return JsonResponse({
+                'erreur': f'Matière "{matiere_nom}" ou niveau "{niveau_nom}" introuvable en base.',
+                'apercu': payload,
+            }, status=400)
+
+        duree = nb_questions * 3  # 3 min par question
+
+        quiz = Quiz.objects.create(
+            titre       = payload.get('titre', f'Quiz {matiere_nom} — {niveau_nom}'),
+            description = payload.get('description', ''),
+            matiere     = matiere_obj,
+            niveau      = niveau_obj,
+            duree_minutes = duree,
+            cree_par    = request.user,
+            est_actif   = True,
+        )
+
+        for i, q_data in enumerate(payload.get('questions', []), 1):
+            question = Question.objects.create(
+                quiz          = quiz,
+                enonce        = q_data.get('enonce', ''),
+                type_question = q_data.get('type', 'qcm'),
+                points        = int(q_data.get('points', 1)),
+                ordre         = i,
+                explication   = q_data.get('explication', ''),
+            )
+            for j, c in enumerate(q_data.get('choix', []), 1):
+                QuizChoix.objects.create(
+                    question   = question,
+                    texte      = c.get('texte', ''),
+                    est_correct= bool(c.get('correct', False)),
+                    ordre      = j,
+                )
+
+        _journaliser_ia(request, 'generation_quiz', nb_questions)
+
+        return JsonResponse({
+            'mode_demo': False,
+            'succes'   : True,
+            'quiz_id'  : quiz.pk,
+            'quiz_titre': quiz.titre,
+            'nb_questions': quiz.nb_questions,
+            'url_quiz' : f'/quiz/{quiz.pk}/demarrer/',
+            'message'  : f'Quiz "{quiz.titre}" créé avec {quiz.nb_questions} questions !',
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse({'erreur': 'Réponse IA invalide. Réessayez.'}, status=500)
+    except Exception as e:
+        return JsonResponse({'erreur': f'Erreur : {str(e)}'}, status=500)

@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'apps.ia',
     'apps.monitoring',
     'apps.securite',
+    'apps.admin_panel',
 ]
 
 MIDDLEWARE = [
@@ -73,7 +74,7 @@ DATABASES = {
         'PORT': os.getenv('DB_PORT', '3306'),
         'OPTIONS': {
             'charset': 'utf8mb4',
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            'init_command': "SET NAMES utf8mb4; SET CHARACTER SET utf8mb4; SET sql_mode='STRICT_TRANS_TABLES'",
         },
     }
 }

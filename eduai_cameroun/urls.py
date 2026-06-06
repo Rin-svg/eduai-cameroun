@@ -15,6 +15,7 @@ urlpatterns = [
     path('api/epreuves/', include('apps.epreuves.api_urls')),
     path('api/quiz/', include('apps.quiz.api_urls')),
     path('api/users/', include('apps.accounts.api_urls')),
+    path('admin-panel/', include('apps.admin_panel.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 admin.site.site_header = "EDUAI Cameroun — Administration"
