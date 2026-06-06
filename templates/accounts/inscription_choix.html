@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Créer un compte — EDUAI Cameroun{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="padding-top:90px !important; min-height:100vh; background:#0d1b2a;">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+
+      <div class="text-center mb-5">
+        <h2 class="text-white fw-bold">
+          <i class="bi bi-person-plus-fill text-warning me-2"></i>Créer votre compte
+        </h2>
+        <p class="text-secondary">Rejoignez la plateforme EDUAI Cameroun — Choisissez votre profil</p>
+      </div>
+
+      <div class="row g-4">
+
+        <!-- Carte Élève -->
+        <div class="col-md-6">
+          <a href="{% url 'inscription_eleve' %}" class="text-decoration-none">
+            <div class="card border-0 h-100 text-center py-4 card-hover" style="background:#1a2c45; transition: transform .2s, box-shadow .2s;">
+              <div class="card-body">
+                <div class="mb-3">
+                  <span style="font-size:4rem;">👨‍🎓</span>
+                </div>
+                <h4 class="text-white fw-bold mb-2">Je suis Élève</h4>
+                <p class="text-secondary small mb-3">
+                  Accédez aux épreuves, quiz interactifs et à l'assistant IA pour préparer vos examens.
+                </p>
+                <ul class="list-unstyled text-start text-secondary small mb-4">
+                  <li><i class="bi bi-check-circle-fill text-success me-2"></i>Bibliothèque d'épreuves BAC/BEPC</li>
+                  <li><i class="bi bi-check-circle-fill text-success me-2"></i>Quiz chronométrés</li>
+                  <li><i class="bi bi-check-circle-fill text-success me-2"></i>Correction automatique IA</li>
+                  <li><i class="bi bi-check-circle-fill text-success me-2"></i>Chatbot pédagogique EduBot</li>
+                </ul>
+                <div class="btn btn-primary w-100 fw-bold">
+                  <i class="bi bi-arrow-right-circle me-2"></i>S'inscrire comme Élève
+                </div>
+              </div>
+            </div>
+          </a>
+        </div>
+
+        <!-- Carte Enseignant -->
+        <div class="col-md-6">
+          <a href="{% url 'inscription_enseignant' %}" class="text-decoration-none">
+            <div class="card border-0 h-100 text-center py-4 card-hover" style="background:#1a2c45; transition: transform .2s, box-shadow .2s;">
+              <div class="card-body">
+                <div class="mb-3">
+                  <span style="font-size:4rem;">👨‍🏫</span>
+                </div>
+                <h4 class="text-white fw-bold mb-2">Je suis Enseignant</h4>
+                <p class="text-secondary small mb-3">
+                  Gérez vos quiz, uploadez des épreuves et suivez les progrès de vos élèves.
+                </p>
+                <ul class="list-unstyled text-start text-secondary small mb-4">
+                  <li><i class="bi bi-check-circle-fill text-success me-2"></i>Créer et gérer des quiz</li>
+                  <li><i class="bi bi-check-circle-fill text-success me-2"></i>Uploader des épreuves</li>
+                  <li><i class="bi bi-check-circle-fill text-success me-2"></i>Suivre les résultats</li>
+                  <li><i class="bi bi-shield-lock-fill text-warning me-2"></i>Code d'activation requis</li>
+                </ul>
+                <div class="btn btn-success w-100 fw-bold">
+                  <i class="bi bi-arrow-right-circle me-2"></i>S'inscrire comme Enseignant
+                </div>
+              </div>
+            </div>
+          </a>
+        </div>
+
+      </div>
+
+      <p class="text-center text-secondary mt-4">
+        Déjà un compte ? <a href="{% url 'connexion' %}" class="text-primary fw-bold">Se connecter</a>
+      </p>
+
+    </div>
+  </div>
+</div>
+
+<style>
+.card-hover:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.4) !important;
+}
+</style>
+{% endblock %}

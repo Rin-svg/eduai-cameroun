@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}Inscription Enseignant — EDUAI Cameroun{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="padding-top:90px !important; min-height:100vh; background:#0d1b2a;">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+
+      <!-- En-tête -->
+      <div class="d-flex align-items-center mb-4">
+        <a href="{% url 'inscription' %}" class="btn btn-outline-secondary btn-sm me-3">
+          <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+          <h3 class="text-white fw-bold mb-0">
+            <span class="me-2">👨‍🏫</span>Inscription Enseignant
+          </h3>
+          <small class="text-secondary">Un code d'activation vous est requis — contactez l'administrateur</small>
+        </div>
+      </div>
+
+      <!-- Avertissement code -->
+      <div class="alert alert-warning d-flex align-items-center mb-4 border-0" style="background:#2d2000;">
+        <i class="bi bi-shield-lock-fill text-warning fs-5 me-3"></i>
+        <div class="text-warning small">
+          <strong>Accès protégé.</strong> Pour créer un compte enseignant, vous avez besoin d'un
+          <strong>code d'activation</strong> fourni par l'administrateur de la plateforme.
+          Sans ce code, l'inscription sera refusée.
+        </div>
+      </div>
+
+      <div class="card border-0 shadow" style="background:#1a2c45;">
+        <div class="card-body p-4">
+
+          {% if messages %}
+            {% for msg in messages %}
+            <div class="alert alert-{{ msg.tags }} alert-dismissible fade show">
+              {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+          {% endif %}
+
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            <!-- Identité -->
+            <h6 class="text-success fw-bold mb-3 border-bottom border-secondary pb-2">
+              <i class="bi bi-person me-2"></i>Identité
+            </h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label text-white fw-semibold">Prénom *</label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}<div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-white fw-semibold">Nom *</label>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}<div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-white fw-semibold">Email professionnel *</label>
+                {{ form.email }}
+                {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-white fw-semibold">Téléphone</label>
+                {{ form.telephone }}
+              </div>
+            </div>
+
+            <!-- Profil enseignant -->
+            <h6 class="text-success fw-bold mb-3 border-bottom border-secondary pb-2">
+              <i class="bi bi-book me-2"></i>Profil professionnel
+            </h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label text-white fw-semibold">Matière enseignée *</label>
+                {{ form.matiere_principale }}
+                {% if form.matiere_principale.errors %}<div class="text-danger small mt-1">{{ form.matiere_principale.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-white fw-semibold">Établissement *</label>
+                {{ form.etablissement }}
+                {% if form.etablissement.errors %}<div class="text-danger small mt-1">{{ form.etablissement.errors.0 }}</div>{% endif %}
+              </div>
+            </div>
+
+            <!-- Compte -->
+            <h6 class="text-success fw-bold mb-3 border-bottom border-secondary pb-2">
+              <i class="bi bi-shield-lock me-2"></i>Identifiants de connexion
+            </h6>
+            <div class="row g-3 mb-4">
+              <div class="col-12">
+                <label class="form-label text-white fw-semibold">Nom d'utilisateur *</label>
+                {{ form.username }}
+                {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-white fw-semibold">Mot de passe *</label>
+                {{ form.password1 }}
+                {% if form.password1.errors %}<div class="text-danger small mt-1">{{ form.password1.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-white fw-semibold">Confirmer *</label>
+                {{ form.password2 }}
+                {% if form.password2.errors %}<div class="text-danger small mt-1">{{ form.password2.errors.0 }}</div>{% endif %}
+              </div>
+            </div>
+
+            <!-- Code activation -->
+            <h6 class="text-warning fw-bold mb-3 border-bottom border-warning pb-2">
+              <i class="bi bi-key-fill me-2"></i>Vérification
+            </h6>
+            <div class="mb-4">
+              <label class="form-label text-white fw-semibold">Code d'activation *</label>
+              {{ form.code_activation }}
+              {% if form.code_activation.errors %}
+                <div class="text-danger small mt-1">{{ form.code_activation.errors.0 }}</div>
+              {% endif %}
+              <small class="text-secondary">{{ form.code_activation.help_text }}</small>
+            </div>
+
+            <div class="d-grid mt-2">
+              <button type="submit" class="btn btn-success btn-lg fw-bold">
+                <i class="bi bi-person-check me-2"></i>Créer mon compte Enseignant
+              </button>
+            </div>
+          </form>
+
+          <hr class="border-secondary mt-4">
+          <p class="text-center text-secondary mb-0 small">
+            Déjà un compte ? <a href="{% url 'connexion' %}" class="text-primary fw-bold">Se connecter</a>
+            &nbsp;|&nbsp;
+            <a href="{% url 'inscription' %}" class="text-secondary">Changer de profil</a>
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,75 +1,165 @@
 {% extends 'base.html' %}
 {% block title %}Mon Profil — EDUAI Cameroun{% endblock %}
+
 {% block content %}
-<div class="container py-4" style="padding-top:90px!important">
-  <div class="row">
-    <div class="col-lg-4 mb-4">
-      <div class="card border-0 shadow text-center p-4">
+<div class="container py-4" style="padding-top:90px!important; min-height:100vh; background:#0d1b2a;">
+  <div class="row g-4">
+
+    <!-- Colonne gauche -->
+    <div class="col-lg-4">
+      <div class="card border-0 text-center p-4 mb-3" style="background:#1a2c45;">
         {% if user.avatar %}
-          <img src="{{ user.avatar.url }}" class="rounded-circle mx-auto mb-3" width="100" height="100" style="object-fit:cover">
+          <img src="{{ user.avatar.url }}" class="rounded-circle mx-auto mb-3"
+               width="100" height="100" style="object-fit:cover; border:3px solid #0d6efd;">
         {% else %}
-          <div class="mx-auto mb-3 d-flex align-items-center justify-content-center bg-primary text-white rounded-circle fw-bold fs-2"
-               style="width:100px;height:100px">{{ user.username|first|upper }}</div>
+          <div class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle fw-bold fs-2"
+               style="width:100px;height:100px;background:#0d6efd;color:#fff;">
+            {{ user.username|first|upper }}
+          </div>
         {% endif %}
-        <h5 class="fw-bold">{{ user.get_full_name|default:user.username }}</h5>
-        <span class="badge bg-role-{{ user.role }} mb-2">{{ user.get_role_display }}</span>
-        <p class="text-muted small">{{ user.etablissement|default:"Établissement non renseigné" }}</p>
-        <p class="text-muted small">{{ user.classe|default:"Classe non renseignée" }}</p>
-        <hr>
+
+        <h5 class="fw-bold text-white">{{ user.get_full_name|default:user.username }}</h5>
+        <span class="badge mb-2
+          {% if user.role == 'admin' %}bg-danger
+          {% elif user.role == 'enseignant' %}bg-success
+          {% else %}bg-primary{% endif %}">
+          {{ user.get_role_display }}
+        </span>
+
+        {% if user.role == 'admin' %}
+          <p class="text-secondary small"><i class="bi bi-shield-fill text-danger me-1"></i>Administrateur plateforme</p>
+        {% elif user.role == 'enseignant' %}
+          <p class="text-secondary small"><i class="bi bi-building me-1"></i>{{ user.etablissement|default:"Établissement non renseigné" }}</p>
+          <p class="text-secondary small"><i class="bi bi-book me-1"></i>{{ user.classe|default:"Matière non renseignée" }}</p>
+        {% else %}
+          <p class="text-secondary small"><i class="bi bi-building me-1"></i>{{ user.etablissement|default:"Établissement non renseigné" }}</p>
+          <p class="text-secondary small"><i class="bi bi-mortarboard me-1"></i>{{ user.classe|default:"Classe non renseignée" }}</p>
+        {% endif %}
+
+        {# Compteurs : élèves uniquement #}
+        {% if user.role == 'eleve' %}
+        <hr class="border-secondary">
         <div class="row g-2 text-center">
           <div class="col-4">
-            <div class="fw-bold text-primary">{{ nb_quiz }}</div>
-            <small class="text-muted">Quiz</small>
+            <div class="fw-bold text-primary fs-5">{{ nb_quiz }}</div>
+            <small class="text-secondary">Quiz</small>
           </div>
           <div class="col-4">
-            <div class="fw-bold text-success">{{ nb_telechargements }}</div>
-            <small class="text-muted">Télécharg.</small>
+            <div class="fw-bold text-success fs-5">{{ nb_telechargements }}</div>
+            <small class="text-secondary">Télécharg.</small>
           </div>
           <div class="col-4">
-            <div class="fw-bold text-warning">{{ score_moyen|floatformat:1 }}</div>
-            <small class="text-muted">Score moy.</small>
+            <div class="fw-bold text-warning fs-5">{{ score_moyen|floatformat:1 }}</div>
+            <small class="text-secondary">Score moy.</small>
           </div>
         </div>
+        {% endif %}
+      </div>
+
+      <!-- Changer mot de passe (tous les rôles) -->
+      <div class="card border-0 p-3" style="background:#1a2c45;">
+        <h6 class="text-white fw-bold mb-3">
+          <i class="bi bi-key-fill text-warning me-2"></i>Changer mon mot de passe
+        </h6>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="changer_mdp">
+          <div class="mb-2">
+            <input type="password" name="ancien_mdp"
+                   class="form-control form-control-sm bg-dark text-white border-secondary"
+                   placeholder="Mot de passe actuel" required>
+          </div>
+          <div class="mb-2">
+            <input type="password" name="nouveau_mdp" id="nouveau_mdp"
+                   class="form-control form-control-sm bg-dark text-white border-secondary"
+                   placeholder="Nouveau mot de passe" minlength="8" required>
+          </div>
+          <div class="mb-3">
+            <input type="password" name="confirmer_mdp" id="confirmer_mdp"
+                   class="form-control form-control-sm bg-dark text-white border-secondary"
+                   placeholder="Confirmer le nouveau" required>
+            <div id="mdp-match" class="small mt-1"></div>
+          </div>
+          <button type="submit" class="btn btn-warning btn-sm w-100 fw-bold">
+            <i class="bi bi-lock me-1"></i>Mettre à jour le mot de passe
+          </button>
+        </form>
       </div>
     </div>
+
+    <!-- Colonne droite : formulaire -->
     <div class="col-lg-8">
-      <div class="card border-0 shadow">
+      <div class="card border-0" style="background:#1a2c45;">
         <div class="card-body p-4">
-          <h5 class="fw-bold mb-4"><i class="bi bi-pencil me-2 text-primary"></i>Modifier mon profil</h5>
+
+          {% if messages %}
+            {% for msg in messages %}
+            <div class="alert alert-{{ msg.tags }} alert-dismissible fade show border-0">
+              {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+          {% endif %}
+
+          <h5 class="fw-bold text-white mb-4">
+            <i class="bi bi-pencil-fill text-primary me-2"></i>Modifier mon profil
+          </h5>
+
           <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
+            <input type="hidden" name="action" value="modifier_profil">
+
             <div class="row g-3">
               <div class="col-md-6">
-                <label class="form-label fw-semibold">Prénom</label>
+                <label class="form-label text-white fw-semibold">Prénom</label>
                 {{ form.first_name }}
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-semibold">Nom</label>
+                <label class="form-label text-white fw-semibold">Nom</label>
                 {{ form.last_name }}
               </div>
-              <div class="col-12">
-                <label class="form-label fw-semibold">Email</label>
+              <div class="col-md-6">
+                <label class="form-label text-white fw-semibold">Email</label>
                 {{ form.email }}
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-semibold">Téléphone</label>
+                <label class="form-label text-white fw-semibold">Téléphone</label>
                 {{ form.telephone }}
               </div>
+
+              {# Classe et établissement : élèves et enseignants seulement #}
+              {% if user.role == 'eleve' %}
               <div class="col-md-6">
-                <label class="form-label fw-semibold">Classe / Filière</label>
+                <label class="form-label text-white fw-semibold">Classe</label>
                 {{ form.classe }}
               </div>
-              <div class="col-12">
-                <label class="form-label fw-semibold">Établissement</label>
+              <div class="col-md-6">
+                <label class="form-label text-white fw-semibold">Établissement</label>
                 {{ form.etablissement }}
               </div>
+              {% elif user.role == 'enseignant' %}
+              <div class="col-md-6">
+                <label class="form-label text-white fw-semibold">Matière enseignée</label>
+                {{ form.classe }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-white fw-semibold">Établissement</label>
+                {{ form.etablissement }}
+              </div>
+              {% endif %}
+
               <div class="col-12">
-                <label class="form-label fw-semibold">Photo de profil</label>
+                <label class="form-label text-white fw-semibold">Photo de profil</label>
                 {{ form.avatar }}
+                {% if user.avatar %}
+                  <small class="text-secondary d-block mt-1">
+                    <i class="bi bi-image me-1"></i>Photo actuelle enregistrée
+                  </small>
+                {% endif %}
               </div>
             </div>
+
             <div class="d-flex gap-3 mt-4">
-              <button type="submit" class="btn btn-primary px-4">
+              <button type="submit" class="btn btn-primary px-4 fw-bold">
                 <i class="bi bi-save me-2"></i>Enregistrer
               </button>
               <a href="{% url 'accueil' %}" class="btn btn-outline-secondary">Annuler</a>
@@ -78,6 +168,19 @@
         </div>
       </div>
     </div>
+
   </div>
 </div>
+
+<script>
+document.getElementById('confirmer_mdp').addEventListener('input', function() {
+  const n = document.getElementById('nouveau_mdp').value;
+  const c = this.value;
+  const f = document.getElementById('mdp-match');
+  if (!c) { f.innerHTML = ''; return; }
+  f.innerHTML = n === c
+    ? '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Les mots de passe correspondent.</span>'
+    : '<span class="text-danger"><i class="bi bi-x-circle me-1"></i>Les mots de passe ne correspondent pas.</span>';
+});
+</script>
 {% endblock %}

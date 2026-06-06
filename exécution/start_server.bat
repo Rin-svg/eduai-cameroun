@@ -8,28 +8,38 @@ echo   EDUAI Cameroun - Plateforme Educative IA
 echo  ============================================
 echo.
 
-:: Aller dans le dossier du projet
-cd /d "%~dp0"
+:: Aller dans le dossier du projet (chemin fixe)
+cd /d "C:\Users\RN-Re\Desktop\eduai_cameroun_v1.0\eduai_cameroun"
+if errorlevel 1 (
+    echo ERREUR : Dossier du projet introuvable.
+    pause
+    exit /b 1
+)
 
 :: Activer le virtualenv
-echo [1/3] Activation de l'environnement virtuel...
+echo [1/4] Activation de l'environnement virtuel...
 call .venv\Scripts\activate.bat
 if errorlevel 1 (
-    echo ERREUR : .venv introuvable. Verifiez que le venv est installe.
+    echo ERREUR : .venv introuvable.
     pause
     exit /b 1
 )
 
 :: Appliquer les migrations si necessaire
-echo [2/3] Verification des migrations...
+echo [2/4] Verification des migrations...
 python manage.py migrate --run-syncdb 2>nul
 
+:: Recuperer l'IP Wi-Fi reelle
+echo [3/4] Detection de l'adresse IP...
+for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /i "IPv4" ^| findstr "10.96"') do set IP=%%a
+set IP=%IP: =%
+
 :: Lancer le serveur
-echo [3/3] Demarrage du serveur...
+echo [4/4] Demarrage du serveur...
 echo.
 echo  Serveur accessible sur :
-echo    - Local    : http://127.0.0.1:8000
-echo    - Reseau   : http://192.168.1.10:8000
+echo    - Local   : http://127.0.0.1:8000
+echo    - Reseau  : http://%IP%:8000
 echo.
 echo  Comptes de demo :
 echo    admin       / EduAI2025!

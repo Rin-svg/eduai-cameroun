@@ -1,43 +1,71 @@
 {% extends 'base.html' %}
 {% block title %}Mes Résultats — EDUAI Cameroun{% endblock %}
+
 {% block content %}
-<div class="container py-4" style="padding-top:90px!important">
-  <h3 class="fw-bold mb-4"><i class="bi bi-trophy me-2 text-warning"></i>Mes Résultats</h3>
-  {% if sessions %}
-  <div class="table-responsive">
-    <table class="table table-hover align-middle">
-      <thead class="table-dark">
-        <tr><th>Quiz</th><th>Matière</th><th>Score</th><th>Réussite</th><th>Date</th><th></th></tr>
-      </thead>
-      <tbody>
-        {% for s in sessions %}
-        <tr>
-          <td class="fw-semibold">{{ s.quiz.titre }}</td>
-          <td><span class="badge badge-matiere">{{ s.quiz.matiere.nom }}</span></td>
-          <td>{{ s.score_obtenu }}/{{ s.quiz.score_total }}</td>
-          <td>
-            <div class="d-flex align-items-center gap-2">
-              <div class="progress flex-grow-1" style="height:8px;max-width:80px">
-                <div class="progress-bar
-                  {% if s.pourcentage >= 80 %}bg-success{% elif s.pourcentage >= 60 %}bg-primary{% else %}bg-danger{% endif %}"
-                  style="width:{{ s.pourcentage }}%"></div>
-              </div>
-              <small>{{ s.pourcentage }}%</small>
-            </div>
-          </td>
-          <td><small class="text-muted">{{ s.date_fin|date:"d/m/Y H:i" }}</small></td>
-          <td><a href="{% url 'resultat_quiz' s.pk %}" class="btn btn-sm btn-outline-primary">Voir</a></td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<div class="container py-4" style="padding-top:90px!important; min-height:100vh; background:#0d1b2a;">
+
+  {% if user.role != 'eleve' %}
+  <!-- Accès refusé pour admin et enseignants -->
+  <div class="row justify-content-center mt-5">
+    <div class="col-md-6 text-center">
+      <i class="bi bi-shield-x text-danger" style="font-size:4rem;"></i>
+      <h4 class="text-white mt-3">Page réservée aux élèves</h4>
+      <p class="text-secondary">Le module "Mes résultats" est uniquement disponible pour les comptes élèves.</p>
+      <a href="{% url 'accueil' %}" class="btn btn-primary mt-2">
+        <i class="bi bi-house me-2"></i>Retour à l'accueil
+      </a>
+    </div>
   </div>
+
   {% else %}
-  <div class="text-center py-5 text-muted">
+  <h3 class="fw-bold mb-4 text-white">
+    <i class="bi bi-trophy me-2 text-warning"></i>Mes Résultats
+  </h3>
+
+  {% if sessions %}
+  <div class="card border-0" style="background:#1a2c45;">
+    <div class="table-responsive">
+      <table class="table table-dark table-hover align-middle mb-0" style="background:transparent;">
+        <thead>
+          <tr class="text-secondary small border-secondary">
+            <th>Quiz</th><th>Matière</th><th>Score</th><th>Réussite</th><th>Date</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in sessions %}
+          <tr>
+            <td class="fw-semibold text-white">{{ s.quiz.titre }}</td>
+            <td><span class="badge badge-matiere">{{ s.quiz.matiere.nom }}</span></td>
+            <td class="text-white">{{ s.score_obtenu }}/{{ s.quiz.score_total }}</td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="progress flex-grow-1" style="height:8px;max-width:80px;background:#0d1b2a;">
+                  <div class="progress-bar
+                    {% if s.pourcentage >= 80 %}bg-success{% elif s.pourcentage >= 60 %}bg-primary{% else %}bg-danger{% endif %}"
+                    style="width:{{ s.pourcentage }}%"></div>
+                </div>
+                <small class="text-white">{{ s.pourcentage }}%</small>
+              </div>
+            </td>
+            <td><small class="text-secondary">{{ s.date_fin|date:"d/m/Y H:i" }}</small></td>
+            <td><a href="{% url 'resultat_quiz' s.pk %}" class="btn btn-sm btn-outline-primary">Voir</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% else %}
+  <div class="text-center py-5 text-secondary">
     <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
     <h5>Aucun résultat pour le moment</h5>
-    <a href="{% url 'liste_quiz' %}" class="btn btn-primary mt-2">Passer un quiz</a>
+    <a href="{% url 'liste_quiz' %}" class="btn btn-primary mt-2">
+      <i class="bi bi-patch-question me-2"></i>Passer un quiz
+    </a>
   </div>
+  {% endif %}
+
   {% endif %}
 </div>
 {% endblock %}

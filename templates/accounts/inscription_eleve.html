@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}Inscription Élève — EDUAI Cameroun{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="padding-top:90px !important; min-height:100vh; background:#0d1b2a;">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+
+      <!-- En-tête -->
+      <div class="d-flex align-items-center mb-4">
+        <a href="{% url 'inscription' %}" class="btn btn-outline-secondary btn-sm me-3">
+          <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+          <h3 class="text-white fw-bold mb-0">
+            <span class="me-2">👨‍🎓</span>Inscription Élève
+          </h3>
+          <small class="text-secondary">Tous les champs marqués * sont obligatoires</small>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow" style="background:#1a2c45;">
+        <div class="card-body p-4">
+
+          {% if messages %}
+            {% for msg in messages %}
+            <div class="alert alert-{{ msg.tags }} alert-dismissible fade show">
+              {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+          {% endif %}
+
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            <!-- Identité -->
+            <h6 class="text-warning fw-bold mb-3 border-bottom border-secondary pb-2">
+              <i class="bi bi-person me-2"></i>Identité
+            </h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label text-white fw-semibold">Prénom *</label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}<div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-white fw-semibold">Nom *</label>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}<div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-white fw-semibold">Email</label>
+                {{ form.email }}
+                {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-white fw-semibold">Téléphone</label>
+                {{ form.telephone }}
+              </div>
+            </div>
+
+            <!-- Scolarité -->
+            <h6 class="text-warning fw-bold mb-3 border-bottom border-secondary pb-2">
+              <i class="bi bi-mortarboard me-2"></i>Scolarité
+            </h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label text-white fw-semibold">Classe *</label>
+                {{ form.classe }}
+                {% if form.classe.errors %}<div class="text-danger small mt-1">{{ form.classe.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-white fw-semibold">Établissement</label>
+                {{ form.etablissement }}
+              </div>
+            </div>
+
+            <!-- Compte -->
+            <h6 class="text-warning fw-bold mb-3 border-bottom border-secondary pb-2">
+              <i class="bi bi-shield-lock me-2"></i>Identifiants de connexion
+            </h6>
+            <div class="row g-3 mb-4">
+              <div class="col-12">
+                <label class="form-label text-white fw-semibold">Nom d'utilisateur *</label>
+                {{ form.username }}
+                {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>{% endif %}
+                <small class="text-secondary">Ce sera votre identifiant de connexion.</small>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-white fw-semibold">Mot de passe *</label>
+                {{ form.password1 }}
+                {% if form.password1.errors %}<div class="text-danger small mt-1">{{ form.password1.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-white fw-semibold">Confirmer *</label>
+                {{ form.password2 }}
+                {% if form.password2.errors %}<div class="text-danger small mt-1">{{ form.password2.errors.0 }}</div>{% endif %}
+              </div>
+            </div>
+
+            <div class="d-grid mt-2">
+              <button type="submit" class="btn btn-primary btn-lg fw-bold">
+                <i class="bi bi-person-check me-2"></i>Créer mon compte Élève
+              </button>
+            </div>
+          </form>
+
+          <hr class="border-secondary mt-4">
+          <p class="text-center text-secondary mb-0 small">
+            Déjà un compte ? <a href="{% url 'connexion' %}" class="text-primary fw-bold">Se connecter</a>
+            &nbsp;|&nbsp;
+            <a href="{% url 'inscription' %}" class="text-secondary">Changer de profil</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

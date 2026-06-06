@@ -1,32 +1,33 @@
 {% extends 'base.html' %}
 {% block title %}Bibliothèque d'épreuves — EDUAI Cameroun{% endblock %}
 {% block content %}
-<div class="container-fluid py-4" style="padding-top: 90px !important;">
+<div class="container-fluid py-4" style="padding-top: 90px !important; background:#0d1b2a; min-height:100vh;">
   <div class="row">
+
     <!-- SIDEBAR FILTRES -->
     <div class="col-lg-3 mb-4">
-      <div class="card border-0 shadow-sm sticky-top" style="top: 80px;">
+      <div class="card border-0 shadow-sm sticky-top" style="top: 80px; background:#1a2c45;">
         <div class="card-body">
-          <h6 class="fw-bold mb-3"><i class="bi bi-funnel me-2 text-primary"></i>Filtrer les épreuves</h6>
+          <h6 class="fw-bold mb-3 text-white"><i class="bi bi-funnel me-2 text-primary"></i>Filtrer les épreuves</h6>
           <form method="get" id="formRecherche">
             <div class="mb-3">
-              <label class="form-label small fw-semibold">Recherche</label>
+              <label class="form-label small fw-semibold text-secondary">Recherche</label>
               {{ form.q }}
             </div>
             <div class="mb-3">
-              <label class="form-label small fw-semibold">Matière</label>
+              <label class="form-label small fw-semibold text-secondary">Matière</label>
               {{ form.matiere }}
             </div>
             <div class="mb-3">
-              <label class="form-label small fw-semibold">Niveau</label>
+              <label class="form-label small fw-semibold text-secondary">Niveau</label>
               {{ form.niveau }}
             </div>
             <div class="mb-3">
-              <label class="form-label small fw-semibold">Type d'examen</label>
+              <label class="form-label small fw-semibold text-secondary">Type d'examen</label>
               {{ form.type_examen }}
             </div>
             <div class="mb-3">
-              <label class="form-label small fw-semibold">Année</label>
+              <label class="form-label small fw-semibold text-secondary">Année</label>
               {{ form.annee }}
             </div>
             <div class="d-grid gap-2">
@@ -45,13 +46,14 @@
     <!-- LISTE ÉPREUVES -->
     <div class="col-lg-9">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="fw-bold mb-0">
+        <h4 class="fw-bold mb-0 text-white">
           <i class="bi bi-file-earmark-text me-2 text-primary"></i>
           {{ total }} épreuve{{ total|pluralize }} trouvée{{ total|pluralize }}
         </h4>
-        {% if user.is_authenticated and user.est_enseignant or user.est_admin %}
+        {# Bouton upload : admin et enseignants uniquement #}
+        {% if user.is_authenticated and user.role != 'eleve' %}
         <a href="{% url 'upload_epreuve' %}" class="btn btn-success btn-sm">
-          <i class="bi bi-cloud-upload me-1"></i>Uploader
+          <i class="bi bi-cloud-upload me-1"></i>Uploader une épreuve
         </a>
         {% endif %}
       </div>
@@ -59,22 +61,22 @@
       <div class="row g-3">
         {% for epreuve in epreuves %}
         <div class="col-md-6 col-xl-4">
-          <div class="card epreuve-card h-100 border-0 shadow-sm">
+          <div class="card epreuve-card h-100 border-0 shadow-sm" style="background:#1a2c45;">
             <div class="card-body">
               <div class="d-flex justify-content-between mb-2">
                 <span class="badge badge-matiere small">{{ epreuve.matiere.nom }}</span>
-                <span class="badge bg-light text-dark small">{{ epreuve.annee }}</span>
+                <span class="badge bg-secondary small">{{ epreuve.annee }}</span>
               </div>
-              <h6 class="fw-bold card-title">{{ epreuve.titre }}</h6>
-              <p class="small text-muted mb-2">
+              <h6 class="fw-bold card-title text-white">{{ epreuve.titre }}</h6>
+              <p class="small text-secondary mb-2">
                 <i class="bi bi-layers me-1"></i>{{ epreuve.niveau.nom }}<br>
                 <i class="bi bi-tag me-1"></i>{{ epreuve.get_type_examen_display }}
               </p>
               {% if epreuve.description %}
-              <p class="small text-muted text-truncate">{{ epreuve.description }}</p>
+              <p class="small text-secondary text-truncate">{{ epreuve.description }}</p>
               {% endif %}
               <div class="d-flex justify-content-between align-items-center mt-auto">
-                <small class="text-muted">
+                <small class="text-secondary">
                   <i class="bi bi-download me-1"></i>{{ epreuve.nb_telechargements }}
                   {% if epreuve.corrige %}<span class="badge bg-success ms-2 small">Corrigé</span>{% endif %}
                 </small>
@@ -82,6 +84,7 @@
                   <a href="{% url 'detail_epreuve' epreuve.pk %}" class="btn btn-outline-primary btn-sm">
                     <i class="bi bi-eye"></i>
                   </a>
+                  {# Télécharger : tous les utilisateurs connectés #}
                   {% if user.is_authenticated %}
                   <a href="{% url 'telecharger_epreuve' epreuve.pk %}" class="btn btn-primary btn-sm">
                     <i class="bi bi-download"></i>
@@ -94,7 +97,7 @@
         </div>
         {% empty %}
         <div class="col-12">
-          <div class="text-center py-5 text-muted">
+          <div class="text-center py-5 text-secondary">
             <i class="bi bi-search fs-1 d-block mb-3 opacity-50"></i>
             <h5>Aucune épreuve trouvée</h5>
             <p>Modifiez vos critères de recherche ou <a href="{% url 'liste_epreuves' %}">réinitialisez les filtres</a>.</p>
@@ -103,6 +106,7 @@
         {% endfor %}
       </div>
     </div>
+
   </div>
 </div>
 {% endblock %}

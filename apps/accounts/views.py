@@ -9,6 +9,8 @@ from django.utils import timezone
 from django.conf import settings
 from .models import Utilisateur
 from .forms import ConnexionForm, InscriptionForm, ProfilForm
+from .forms import InscriptionEleveForm, InscriptionEnseignantForm
+
 
 
 def connexion(request):
@@ -40,20 +42,46 @@ def connexion(request):
 
 
 def inscription(request):
+    """Page de choix du type de compte."""
+    if request.user.is_authenticated:
+        return redirect('accueil')
+    return render(request, 'accounts/inscription_choix.html')
+
+
+def inscription_eleve(request):
+    """Inscription élève."""
     if request.user.is_authenticated:
         return redirect('accueil')
 
     if request.method == 'POST':
-        form = InscriptionForm(request.POST)
+        form = InscriptionEleveForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
-            messages.success(request, "Compte créé avec succès ! Bienvenue sur EDUAI Cameroun.")
+            messages.success(request, f"Bienvenue {user.first_name} ! Ton compte élève est créé.")
             return redirect('accueil')
     else:
-        form = InscriptionForm()
+        form = InscriptionEleveForm()
 
-    return render(request, 'accounts/inscription.html', {'form': form})
+    return render(request, 'accounts/inscription_eleve.html', {'form': form})
+
+
+def inscription_enseignant(request):
+    """Inscription enseignant — protégée par code."""
+    if request.user.is_authenticated:
+        return redirect('accueil')
+
+    if request.method == 'POST':
+        form = InscriptionEnseignantForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, f"Bienvenue {user.first_name} ! Votre compte enseignant est actif.")
+            return redirect('accueil')
+    else:
+        form = InscriptionEnseignantForm()
+
+    return render(request, 'accounts/inscription_enseignant.html', {'form': form})
 
 
 @login_required
@@ -66,29 +94,56 @@ def deconnexion(request):
 @login_required
 def profil(request):
     if request.method == 'POST':
-        form = ProfilForm(request.POST, request.FILES, instance=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Profil mis à jour avec succès.")
-            return redirect('profil')
+        action = request.POST.get('action', 'modifier_profil')
+
+        # ── Action 1 : modifier le profil ─────────────────────────────────────
+        if action == 'modifier_profil':
+            form = ProfilForm(request.POST, request.FILES, instance=request.user)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Profil mis à jour avec succès.")
+                return redirect('profil')
+            else:
+                messages.error(request, "Veuillez corriger les erreurs ci-dessous.")
+
+        # ── Action 2 : changer le mot de passe ────────────────────────────────
+        elif action == 'changer_mdp':
+            form = ProfilForm(instance=request.user)
+            ancien_mdp   = request.POST.get('ancien_mdp', '')
+            nouveau_mdp  = request.POST.get('nouveau_mdp', '')
+            confirmer    = request.POST.get('confirmer_mdp', '')
+
+            if not request.user.check_password(ancien_mdp):
+                messages.error(request, "Mot de passe actuel incorrect.")
+            elif nouveau_mdp != confirmer:
+                messages.error(request, "Les nouveaux mots de passe ne correspondent pas.")
+            elif len(nouveau_mdp) < 8:
+                messages.error(request, "Le mot de passe doit contenir au moins 8 caractères.")
+            else:
+                request.user.set_password(nouveau_mdp)
+                request.user.save()
+                # Maintenir la session active après changement de mdp
+                update_session_auth_hash(request, request.user)
+                messages.success(request, "Mot de passe modifié avec succès !")
+                return redirect('profil')
     else:
         form = ProfilForm(instance=request.user)
 
-    # Stats de l'utilisateur
+    # Stats
     from apps.quiz.models import SessionQuiz
     from apps.epreuves.models import Telechargement
-    sessions = SessionQuiz.objects.filter(utilisateur=request.user, statut='termine')
-    telechargements = Telechargement.objects.filter(utilisateur=request.user).count()
+    from django.db.models import Avg
 
-    context = {
-        'form': form,
-        'nb_quiz': sessions.count(),
-        'score_moyen': sessions.aggregate(
-            moy=__import__('django.db.models', fromlist=['Avg']).Avg('score_obtenu')
-        )['moy'] or 0,
-        'nb_telechargements': telechargements,
-    }
-    return render(request, 'accounts/profil.html', context)
+    sessions        = SessionQuiz.objects.filter(utilisateur=request.user, statut='termine')
+    nb_telechargements = Telechargement.objects.filter(utilisateur=request.user).count()
+
+    return render(request, 'accounts/profil.html', {
+        'form':               form,
+        'nb_quiz':            sessions.count(),
+        'score_moyen':        sessions.aggregate(moy=Avg('score_obtenu'))['moy'] or 0,
+        'nb_telechargements': nb_telechargements,
+    })
+
 
 
 def _get_ip(request):

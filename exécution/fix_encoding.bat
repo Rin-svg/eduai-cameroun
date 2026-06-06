@@ -8,14 +8,27 @@ echo   EDUAI Cameroun - Correction Encodage
 echo  ============================================
 echo.
 
-cd /d "%~dp0"
+cd /d "C:\Users\RN-Re\Desktop\eduai_cameroun_v1.0\eduai_cameroun"
 
 echo Activation du virtualenv...
 call .venv\Scripts\activate.bat
+if errorlevel 1 (
+    echo ERREUR : .venv introuvable.
+    pause
+    exit /b 1
+)
 
 echo Correction de l encodage en base...
-powershell -Command "Get-Content scripts\fix_encoding_orm.py | python manage.py shell"
+python manage.py shell < scripts\fix_encoding_orm.py
+
+if errorlevel 1 (
+    echo ERREUR : Le script fix_encoding_orm.py a echoue.
+    pause
+    exit /b 1
+)
 
 echo.
-echo Correction terminee ! Rechargez la page dans le navigateur.
+echo  Correction terminee !
+echo  Rechargez la page dans le navigateur.
+echo.
 pause

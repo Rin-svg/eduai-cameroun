@@ -20,7 +20,7 @@ if errorlevel 1 (
 )
 
 :: Lancer le script PowerShell pare-feu
-powershell -ExecutionPolicy Bypass -File "%~dp0scripts\configure_firewall.ps1"
+powershell -ExecutionPolicy Bypass -File "C:\Users\RN-Re\Desktop\eduai_cameroun_v1.0\eduai_cameroun\scripts\configure_firewall.ps1"
 
 if errorlevel 1 (
     echo.
